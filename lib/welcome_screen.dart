@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class WelcomeScreen extends StatelessWidget {
   @override
@@ -25,21 +26,29 @@ class WelcomeScreen extends StatelessWidget {
                 ),
               ],
             ),
+
             Row(
               children: [
-                //Image.asset('assets/sri_lanka_flag.png', height: 20),
+                // Image.asset('assets/sri_lanka_flag.png', height: 20), // Uncomment if you have the image
                 SizedBox(width: 10),
                 Text('+94'),
                 SizedBox(width: 10),
                 Expanded(
                   child: TextField(
+                    keyboardType: TextInputType.phone, // Opens the numeric keypad
+                    inputFormatters: [
+                      LengthLimitingTextInputFormatter(10), // Limits the input to 10 characters
+                    ],
                     decoration: InputDecoration(
                       hintText: 'Mobile number',
+                      border: InputBorder.none, // removes the underline
                     ),
                   ),
                 ),
               ],
             ),
+
+
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {},
