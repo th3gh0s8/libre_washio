@@ -20,7 +20,9 @@ class WelcomeScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Text('Mobile number'),
+                Text('Mobile number',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ],
             ),
             Row(
@@ -43,21 +45,43 @@ class WelcomeScreen extends StatelessWidget {
               onPressed: () {},
               child: Text('Continue'),
               style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 50),
+                foregroundColor: Colors.white, // Text color
+                backgroundColor: Colors.blue, // Background color
+                minimumSize: Size(double.infinity, 50), // Full width button
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10), // Rounded corners
+                ),
+                elevation: 5, // Shadow
+                textStyle: TextStyle(
+                  fontSize: 16, // Text size
+                  fontWeight: FontWeight.bold, // Text weight
+                ),
+                padding: EdgeInsets.symmetric(vertical: 10), // Padding
               ),
             ),
             SizedBox(height: 20),
             Text('or'),
             SizedBox(height: 20),
-
             ElevatedButton.icon(
               onPressed: () {},
               icon: Icon(Icons.g_mobiledata),
               label: Text('Continue with Google'),
               style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 50),
+                foregroundColor: Colors.black, // Text and icon color
+                backgroundColor: Colors.white, // Background color
+                minimumSize: Size(double.infinity, 50), // Full width button
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10), // Rounded corners
+                ),
+                elevation: 5, // Shadow
+                textStyle: TextStyle(
+                  fontSize: 16, // Text size
+                  fontWeight: FontWeight.bold, // Text weight
+                ),
+                padding: EdgeInsets.symmetric(vertical: 10), // Padding
               ),
             ),
+
 
             /*
 
