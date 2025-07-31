@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'welcome_screen.dart'; // Make sure this import is correct based on your file structure
+import 'welcome_screen.dart';
 
 void main() {
   runApp(MyApp());
@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: WelcomeScreen(), // Directly navigate to WelcomeScreen
+      home: WelcomeScreen(),
     );
   }
 }
@@ -30,7 +30,7 @@ class VerificationScreen extends StatelessWidget {
             onPressed: () {},
           ),
           IconButton(
-            icon: Icon(Icons.battery_full), // Corrected icon name
+            icon: Icon(Icons.battery_full),
             onPressed: () {},
           ),
         ],

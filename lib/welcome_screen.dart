@@ -9,17 +9,23 @@ class WelcomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset('assets/uber_eats_logo.png', height: 100),
+            Image.asset('assets/images/logo_light.jpeg', height: 100),
             SizedBox(height: 20),
             Text(
-              'Get started with Uber Eats',
+              'Get started with Washio',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
+
             SizedBox(height: 20),
-            Text('Mobile number'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Text('Mobile number'),
+              ],
+            ),
             Row(
               children: [
-                Image.asset('assets/sri_lanka_flag.png', height: 20),
+                //Image.asset('assets/sri_lanka_flag.png', height: 20),
                 SizedBox(width: 10),
                 Text('+94'),
                 SizedBox(width: 10),
@@ -43,14 +49,7 @@ class WelcomeScreen extends StatelessWidget {
             SizedBox(height: 20),
             Text('or'),
             SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () {},
-              icon: Icon(Icons.apple),
-              label: Text('Continue with Apple'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 50),
-              ),
-            ),
+
             ElevatedButton.icon(
               onPressed: () {},
               icon: Icon(Icons.g_mobiledata),
@@ -59,6 +58,11 @@ class WelcomeScreen extends StatelessWidget {
                 minimumSize: Size(double.infinity, 50),
               ),
             ),
+
+            /*
+
+            SizedBox(height: 20),
+
             ElevatedButton.icon(
               onPressed: () {},
               icon: Icon(Icons.email),
@@ -67,20 +71,17 @@ class WelcomeScreen extends StatelessWidget {
                 minimumSize: Size(double.infinity, 50),
               ),
             ),
-            ElevatedButton.icon(
-              onPressed: () {},
-              icon: Icon(Icons.person),
-              label: Text('Continue as guest'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 50),
-              ),
-            ),
+
             TextButton(
               onPressed: () {},
               child: Text('Find my account'),
             ),
+             */
+
+
+            SizedBox(height: 20),
             Text(
-              'By proceeding, you consent to receiving calls, WhatsApp or SMS/RCS messages, including by automated means, from Uber and its affiliates to the number provided.',
+              'By proceeding, you consent to receiving calls, WhatsApp or SMS/RCS messages, including by automated means, from Washio and its affiliates to the number provided.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12),
             ),
