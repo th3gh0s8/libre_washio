@@ -2,6 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class WelcomeScreen extends StatelessWidget {
+  // Reusable UI function for the mobile number input field
+  Widget buildMobileNumberField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Mobile number',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        SizedBox(height: 10),
+        Row(
+          children: [
+            SizedBox(width: 10),
+            Text('+94'),
+            SizedBox(width: 10),
+            Expanded(
+              child: TextField(
+                keyboardType: TextInputType.phone,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(10),
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                decoration: InputDecoration(
+                  hintText: 'Mobile number',
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -16,56 +50,25 @@ class WelcomeScreen extends StatelessWidget {
               'Get started with Washio',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-
             SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text('Mobile number',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-
-            Row(
-              children: [
-                // Image.asset('assets/sri_lanka_flag.png', height: 20), // Uncomment if you have the image
-                SizedBox(width: 10),
-                Text('+94'),
-                SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    keyboardType: TextInputType.phone, // Opens the numeric keypad
-                    inputFormatters: [
-                      LengthLimitingTextInputFormatter(10), // Limits the input to 10 characters
-                    ],
-                    decoration: InputDecoration(
-                      hintText: 'Mobile number',
-                      border: InputBorder.none, // removes the underline
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-
+            buildMobileNumberField(), // Use the reusable function here
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {},
               child: Text('Continue'),
               style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white, // Text color
-                backgroundColor: Colors.blue, // Background color
-                minimumSize: Size(double.infinity, 50), // Full width button
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.blue,
+                minimumSize: Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10), // Rounded corners
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                elevation: 5, // Shadow
+                elevation: 5,
                 textStyle: TextStyle(
-                  fontSize: 16, // Text size
-                  fontWeight: FontWeight.bold, // Text weight
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
-                padding: EdgeInsets.symmetric(vertical: 10), // Padding
+                padding: EdgeInsets.symmetric(vertical: 10),
               ),
             ),
             SizedBox(height: 20),
@@ -76,42 +79,20 @@ class WelcomeScreen extends StatelessWidget {
               icon: Icon(Icons.g_mobiledata),
               label: Text('Continue with Google'),
               style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.black, // Text and icon color
-                backgroundColor: Colors.white, // Background color
-                minimumSize: Size(double.infinity, 50), // Full width button
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10), // Rounded corners
-                ),
-                elevation: 5, // Shadow
-                textStyle: TextStyle(
-                  fontSize: 16, // Text size
-                  fontWeight: FontWeight.bold, // Text weight
-                ),
-                padding: EdgeInsets.symmetric(vertical: 10), // Padding
-              ),
-            ),
-
-
-            /*
-
-            SizedBox(height: 20),
-
-            ElevatedButton.icon(
-              onPressed: () {},
-              icon: Icon(Icons.email),
-              label: Text('Continue with email'),
-              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.black,
+                backgroundColor: Colors.white,
                 minimumSize: Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 5,
+                textStyle: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+                padding: EdgeInsets.symmetric(vertical: 10),
               ),
             ),
-
-            TextButton(
-              onPressed: () {},
-              child: Text('Find my account'),
-            ),
-             */
-
-
             SizedBox(height: 20),
             Text(
               'By proceeding, you consent to receiving calls, WhatsApp or SMS/RCS messages, including by automated means, from Washio and its affiliates to the number provided.',
