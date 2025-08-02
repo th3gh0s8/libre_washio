@@ -104,9 +104,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-  }
+
 
   void _navigateToVerificationScreen() {
     String phoneNumber = "+94" + _phoneController.text.trim();
