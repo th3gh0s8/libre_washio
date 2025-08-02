@@ -1,7 +1,73 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'verification_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../api.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends StatefulWidget {
+  @override
+  _WelcomeScreenState createState() => _WelcomeScreenState();
+
+
+
+
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  final _phoneController = TextEditingController();
+  bool _isLoading = false;
+
+
+  Future<void> _login() async {
+    final email = _phoneController.text.trim();
+
+
+    if (email.isEmpty) {
+      _showMessage('Please fill in all fields.');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final url = Uri.parse("${ApiService.baseUrl}login.php");
+    final response = await http.post(
+      url,
+      body: {'email': email},
+    );
+
+    final result = jsonDecode(response.body);
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (result['status'] == 'success') {
+      String userId = result['user_id'];
+
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLoggedIn', true);
+      await prefs.setString('userId', userId);
+
+      _showMessage('Login Successful!');
+
+      // Navigate to Dashboard
+      //Navigator.pushReplacementNamed(context, 'screens/verification_screen.dart');
+    } else {
+      _showMessage(result['message']);
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   // Reusable UI function for the mobile number input field
   Widget buildMobileNumberField() {
     return Column(
@@ -19,6 +85,7 @@ class WelcomeScreen extends StatelessWidget {
             SizedBox(width: 10),
             Expanded(
               child: TextField(
+                controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 inputFormatters: [
                   LengthLimitingTextInputFormatter(10),
@@ -36,6 +103,22 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
+
+
+
+  void _navigateToVerificationScreen() {
+    String phoneNumber = "+94" + _phoneController.text.trim();
+    if (_phoneController.text.trim().isEmpty) {
+      _showMessage('Please enter your mobile number.');
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => VerificationScreen(phoneNumber: phoneNumber),
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -51,10 +134,10 @@ class WelcomeScreen extends StatelessWidget {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 20),
-            buildMobileNumberField(), // Use the reusable function here
+            buildMobileNumberField(),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: _navigateToVerificationScreen,
               child: Text('Continue'),
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.white,
@@ -71,11 +154,14 @@ class WelcomeScreen extends StatelessWidget {
                 padding: EdgeInsets.symmetric(vertical: 10),
               ),
             ),
+
             SizedBox(height: 20),
             Text('or'),
             SizedBox(height: 20),
             ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                // Implement Google Sign-In logic here
+              },
               icon: Icon(Icons.g_mobiledata),
               label: Text('Continue with Google'),
               style: ElevatedButton.styleFrom(
