@@ -21,10 +21,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
 
   Future<void> _login() async {
-    final email = _phoneController.text.trim();
+    final phoneNumber = _phoneController.text.trim();
 
 
-    if (email.isEmpty) {
+    if (phoneNumber.isEmpty) {
       _showMessage('Please fill in all fields.');
       return;
     }
@@ -36,7 +36,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     final url = Uri.parse("${ApiService.baseUrl}login.php");
     final response = await http.post(
       url,
-      body: {'email': email},
+      body: {'phoneNumber': phoneNumber},
     );
 
     final result = jsonDecode(response.body);
@@ -57,6 +57,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
       // Navigate to Dashboard
       //Navigator.pushReplacementNamed(context, 'screens/verification_screen.dart');
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => VerificationScreen(phoneNumber: phoneNumber),
+        ),
+      );
+      
     } else {
       _showMessage(result['message']);
     }
@@ -105,7 +112,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
 
 
-
+/*
   void _navigateToVerificationScreen() {
     String phoneNumber = "+94" + _phoneController.text.trim();
     if (_phoneController.text.trim().isEmpty) {
@@ -118,7 +125,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         builder: (context) => VerificationScreen(phoneNumber: phoneNumber),
       ),
     );
-  }
+  }*/
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -127,7 +134,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset('assets/images/logo_light.jpeg', height: 100),
+            Image.asset('assets/images/logo_light.png', height: 250),
             SizedBox(height: 20),
             Text(
               'Get started with Washio',
