@@ -14,12 +14,22 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: WelcomeScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => WelcomeScreen(),
+        '/verification': (context) => VerificationScreen(
+          phoneNumber: ModalRoute.of(context)!.settings.arguments as String,
+        ),
+      },
     );
   }
 }
 
 class VerificationScreen extends StatelessWidget {
+  final String phoneNumber;
+
+  VerificationScreen({required this.phoneNumber});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,7 +52,7 @@ class VerificationScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Enter the 4-digit code sent via SMS at 072 565 6798.',
+              'Enter the 4-digit code sent via SMS at $phoneNumber.',
               style: TextStyle(fontSize: 18),
             ),
             SizedBox(height: 20),
@@ -98,4 +108,3 @@ class VerificationScreen extends StatelessWidget {
     );
   }
 }
-
