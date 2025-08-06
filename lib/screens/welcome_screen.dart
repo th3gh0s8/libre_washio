@@ -32,39 +32,31 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     final url = Uri.parse("${ApiService.baseUrl}login.php");
     // print('Requesting URL: $url'); // Avoid print in production
 
-    try {
-      final response = await http.post(
-        url,
-        body: {'phone': phone},
+    final response = await http.post(
+      url,
+      body: {'phone': phone},
+    );
+
+    // print('Response status code: ${response.statusCode}'); // Avoid print in production
+    // print('Response body: ${response.body}'); // Avoid print in production
+
+    final result = jsonDecode(response.body);
+    if (!mounted) return;
+
+    // setState(() {
+    //   _isLoading = false;
+    // });
+
+    if (result['status'] == 'success') {
+      Navigator.push( // Added navigation logic
+        context,
+        MaterialPageRoute(
+          builder: (context) => VerificationScreen(phoneNumber: phone),
+        ),
       );
-
-      // print('Response status code: ${response.statusCode}'); // Avoid print in production
-      // print('Response body: ${response.body}'); // Avoid print in production
-
-      final result = jsonDecode(response.body);
-      if (!mounted) return;
-
-      // setState(() {
-      //   _isLoading = false;
-      // });
-
-      if (result['status'] == 'success') {
-        Navigator.push( // Added navigation logic
-          context,
-          MaterialPageRoute(
-            builder: (context) => VerificationScreen(phoneNumber: phone),
-          ),
-        );
-      } else {
-        // print('Login failed: ${result['message']}'); // Avoid print in production
-        _showMessage(result['message']);
-      }
-    } catch (e) {
-      // print('An error occurred during login: $e'); // Avoid print in production
-      // setState(() {
-      //  _isLoading = false;
-      // });
-      _showMessage('An error occurred. Please try again.');
+    } else {
+      // print('Login failed: ${result['message']}'); // Avoid print in production
+      _showMessage(result['message']);
     }
   }
 
