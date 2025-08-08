@@ -14,49 +14,56 @@ class WelcomeScreen extends StatefulWidget {
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
   final _phoneController = TextEditingController();
-  // bool _isLoading = false; // Commented out as it's unused for now
+  bool _isLoading = false;
 
   Future<void> _login() async {
     final phone = _phoneController.text.trim();
-    // print('Phone number entered: $phone'); // Avoid print in production
+    // print('Phone number entered: $phone'); // For debugging
 
     if (phone.isEmpty) {
       _showMessage('Please fill in all fields.');
       return;
     }
 
-    // setState(() {
-    //   _isLoading = true;
-    // });
+    setState(() {
+      _isLoading = true;
+    });
 
     final url = Uri.parse("${ApiService.baseUrl}login.php");
-    // print('Requesting URL: $url'); // Avoid print in production
+    print('Requesting URL: $url'); // For debugging
 
     final response = await http.post(
       url,
       body: {'phone': phone},
-    );
+    ).timeout(const Duration(seconds: 10)); // Added timeout
 
-    // print('Response status code: ${response.statusCode}'); // Avoid print in production
-    // print('Response body: ${response.body}'); // Avoid print in production
+    print('Response status code: ${response.statusCode}'); // For debugging
+    print('Response body: ${response.body}'); // For debugging
 
-    final result = jsonDecode(response.body);
+    // If an exception occurs before this point, _isLoading will remain true.
+    // If !mounted, this will return and _isLoading will remain true,
+    // which is a change from the original `finally` block behavior.
     if (!mounted) return;
 
-    // setState(() {
-    //   _isLoading = false;
-    // });
+    final result = jsonDecode(response.body);
 
     if (result['status'] == 'success') {
-      Navigator.push( // Added navigation logic
+      Navigator.pushReplacement( // Changed to pushReplacement
         context,
         MaterialPageRoute(
           builder: (context) => VerificationScreen(phoneNumber: phone),
         ),
       );
     } else {
-      // print('Login failed: ${result['message']}'); // Avoid print in production
-      _showMessage(result['message']);
+      _showMessage(result['message'] ?? 'Login failed. Please try again.');
+    }
+
+    // This will only be reached if no unhandled exceptions occurred above
+    // and if the function didn't return early due to !mounted.
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -132,8 +139,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 10),
               ),
-              onPressed: _login,
-              child: const Text('Continue'),
+              onPressed: _isLoading ? null : _login, // Disable button when loading
+              child: _isLoading
+                  ? const CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    )
+                  : const Text('Continue'),
             ),
             const SizedBox(height: 20),
             const Text('or'),
