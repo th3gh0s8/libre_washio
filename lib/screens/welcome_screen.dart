@@ -17,10 +17,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   bool _isLoading = false;
 
   Future<void> _login() async {
+
     final phone = _phoneController.text.trim();
     // print('Phone number entered: $phone'); // For debugging
 
     if (phone.isEmpty) {
+
       _showMessage('Please fill in all fields.');
       return;
     }
@@ -34,8 +36,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
     final response = await http.post(
       url,
+
       body: {'phone': phone},
     ).timeout(const Duration(seconds: 10)); // Added timeout
+
 
     print('Response status code: ${response.statusCode}'); // For debugging
     print('Response body: ${response.body}'); // For debugging
@@ -48,12 +52,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     final result = jsonDecode(response.body);
 
     if (result['status'] == 'success') {
+
       Navigator.pushReplacement( // Changed to pushReplacement
         context,
         MaterialPageRoute(
           builder: (context) => VerificationScreen(phoneNumber: phone),
         ),
       );
+
     } else {
       _showMessage(result['message'] ?? 'Login failed. Please try again.');
     }
@@ -116,8 +122,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset('assets/images/logo_light.png', height: 250),
+
             const SizedBox(height: 20),
             const Text(
+
               'Get started with Washio',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
