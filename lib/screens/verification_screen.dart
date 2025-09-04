@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dashboard_screen.dart'; // Added import for DashboardScreen
 
 class VerificationScreen extends StatefulWidget {
   final String phoneNumber;
@@ -16,8 +17,11 @@ class _VerificationScreenState extends State<VerificationScreen> {
   void _verifyCode() {
     String code = _codeControllers.map((controller) => controller.text).join();
     if (code.length == 4) {
-      // Navigate to the next screen or perform an action
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      // Navigate to the DashboardScreen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const DashboardScreen()),
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Please enter a valid 4-digit code.')),
@@ -67,7 +71,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _verifyCode,
-              child: Text('Verify Code'),
+              child: Text('Continue'),
             ),
           ],
         ),
