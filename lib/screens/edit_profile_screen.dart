@@ -46,7 +46,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       'name': _nameController.text,
       'email': _emailController.text,
       'phoneNumber': _phoneController.text,
-      // countryCode and countryName are not edited here but could be if needed
     };
     Navigator.pop(context, updatedDetails);
   }
@@ -54,6 +53,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text('Edit Profile'),
         actions: [
@@ -63,48 +63,54 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           )
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: <Widget>[
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                icon: Icon(Icons.person_outline),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // Reduced padding
+          child: Column(
+            children: <Widget>[
+              TextField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  icon: Icon(Icons.person_outline),
+                  isDense: true, // Made denser
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                icon: Icon(Icons.email_outlined),
+              const SizedBox(height: 12), // Reduced height
+              TextField(
+                controller: _emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  icon: Icon(Icons.email_outlined),
+                  isDense: true, // Made denser
+                ),
+                keyboardType: TextInputType.emailAddress,
               ),
-              keyboardType: TextInputType.emailAddress,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _phoneController,
-              decoration: InputDecoration(
-                labelText: 'Phone Number',
-                icon: const Icon(Icons.phone_outlined),
-                prefixText: widget.currentCountryCode + ' ', // Display country code
+              const SizedBox(height: 12), // Reduced height
+              TextField(
+                controller: _phoneController,
+                decoration: InputDecoration(
+                  labelText: 'Phone Number',
+                  icon: const Icon(Icons.phone_outlined),
+                  prefixText: widget.currentCountryCode + ' ',
+                  isDense: true, // Made denser
+                ),
+                keyboardType: TextInputType.phone,
               ),
-              keyboardType: TextInputType.phone,
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.location_on_outlined),
-              title: const Text('Country'),
-              subtitle: Text(widget.currentCountryName), // Display country, not editable for now
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: _saveProfile,
-              child: const Text('Save Changes'),
-            ),
-          ],
+              const SizedBox(height: 12), // Reduced height
+              ListTile(
+                leading: const Icon(Icons.location_on_outlined),
+                title: const Text('Country'),
+                subtitle: Text(widget.currentCountryName),
+                dense: true, // Made ListTile denser
+              ),
+              const SizedBox(height: 20), // Reduced height
+              ElevatedButton(
+                onPressed: _saveProfile,
+                child: const Text('Save Changes'),
+              ),
+            ],
+          ),
         ),
       ),
     );
