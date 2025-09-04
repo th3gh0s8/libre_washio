@@ -21,6 +21,7 @@ class MyApp extends StatelessWidget {
           phoneNumber: ModalRoute.of(context)!.settings.arguments as String,
         ),
       },
+      debugShowCheckedModeBanner: false,
     );
   }
 }
