@@ -152,7 +152,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               onPressed: () {
                 // Implement Google Sign-In logic here
               },
-              icon: Image.asset('assets/images/google_logo.png', height: 24, width: 24),
+              icon: Image.asset('assets/images/google_logo.png', height: 20, width: 20),
               label: const Text('Continue with Google'),
             ),
             const SizedBox(height: 20),
