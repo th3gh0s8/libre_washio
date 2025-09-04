@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:country_code_picker/country_code_picker.dart'; // Added import
-import '../api.dart';
+// import 'package:http/http.dart' as http; // Temporarily commented out
+// import 'dart:convert'; // Temporarily commented out
+import 'package:country_code_picker/country_code_picker.dart';
+// import '../api.dart'; // Temporarily commented out
 import 'verification_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -15,59 +15,27 @@ class WelcomeScreen extends StatefulWidget {
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
   final _phoneController = TextEditingController();
-  bool _isLoading = false;
-  String _selectedCountryCode = "+94"; // Added state variable for country code
+  String _selectedCountryCode = "+94";
+  String _selectedCountryName = "Sri Lanka"; // Added state for country name
 
-  Future<void> _login() async {
-    // Ensure _selectedCountryCode includes '+' or add it if necessary for your API
-    // The CountryCodePicker's dialCode usually includes '+'
-    final phoneWithCountryCode = _selectedCountryCode + _phoneController.text.trim();
-    final phone = _phoneController.text.trim(); // Original phone for verification screen
-
-    // print('Phone number with country code: $phoneWithCountryCode'); // For debugging
+  void _login() {
+    final phone = _phoneController.text.trim();
 
     if (phone.isEmpty) {
       _showMessage('Please fill in all fields.');
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
-
-    final url = Uri.parse("${ApiService.baseUrl}login.php");
-    print('Requesting URL: $url'); // For debugging
-
-    final response = await http.post(
-      url,
-      body: {'phone': phoneWithCountryCode}, // Use phoneWithCountryCode
-    ).timeout(const Duration(seconds: 10));
-
-
-    print('Response status code: ${response.statusCode}'); // For debugging
-    print('Response body: ${response.body}'); // For debugging
-
-    if (!mounted) return;
-
-    final result = jsonDecode(response.body);
-
-    if (result['status'] == 'success') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          // Pass the phone number without country code, or with, depending on VerificationScreen needs
-          builder: (context) => VerificationScreen(phoneNumber: phone),
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => VerificationScreen(
+          phoneNumber: phone,
+          countryCode: _selectedCountryCode,
+          countryName: _selectedCountryName,
         ),
-      );
-    } else {
-      _showMessage(result['message'] ?? 'Login failed. Please try again.');
-    }
-
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+      ),
+    );
   }
 
   void _showMessage(String message) {
@@ -85,7 +53,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 10),
-        Container( // Added a container for better UI for the row
+        Container(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey),
@@ -97,21 +65,22 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 onChanged: (countryCode) {
                   setState(() {
                     _selectedCountryCode = countryCode.dialCode ?? "+94";
+                    _selectedCountryName = countryCode.name ?? "Unknown Country"; // Update country name
                   });
                 },
-                initialSelection: 'LK', // ISO code for Sri Lanka
-                favorite: const ['+94', 'LK'], // Optional: Add favorites
+                initialSelection: 'LK',
+                favorite: const ['+94', 'LK'],
                 showCountryOnly: false,
                 showOnlyCountryWhenClosed: false,
                 alignLeft: false,
               ),
-              const SizedBox(width: 5), // Reduced SizedBox
+              const SizedBox(width: 5),
               Expanded(
                 child: TextField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   inputFormatters: [
-                    LengthLimitingTextInputFormatter(10), // Adjust length if needed based on country
+                    LengthLimitingTextInputFormatter(10),
                     FilteringTextInputFormatter.digitsOnly,
                   ],
                   decoration: const InputDecoration(
@@ -159,12 +128,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 10),
               ),
-              onPressed: _isLoading ? null : _login,
-              child: _isLoading
-                  ? const CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    )
-                  : const Text('Continue'),
+              onPressed: _login,
+              child: const Text('Continue'),
             ),
             const SizedBox(height: 20),
             const Text('or'),
@@ -187,7 +152,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               onPressed: () {
                 // Implement Google Sign-In logic here
               },
-              icon: Image.asset('assets/images/google_logo.png', height: 24, width: 24), // Replaced Icon with Google logo
+              icon: Image.asset('assets/images/google_logo.png', height: 24, width: 24),
               label: const Text('Continue with Google'),
             ),
             const SizedBox(height: 20),
