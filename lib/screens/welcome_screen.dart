@@ -15,10 +15,9 @@ class WelcomeScreen extends StatefulWidget {
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
   final _phoneController = TextEditingController();
-  // bool _isLoading = false; // Temporarily removed
   String _selectedCountryCode = "+94";
+  String _selectedCountryName = "Sri Lanka"; // Added state for country name
 
-  // Future<void> _login() async { // Temporarily changed to synchronous
   void _login() {
     final phone = _phoneController.text.trim();
 
@@ -27,41 +26,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       return;
     }
 
-    // setState(() { // Temporarily removed
-    //   _isLoading = true;
-    // });
-
-    // final url = Uri.parse("${ApiService.baseUrl}login.php"); // Temporarily removed
-    // print('Requesting URL: $url'); // Temporarily removed
-
-    // final response = await http.post( // Temporarily removed
-    //   url,
-    //   body: {'phone': _selectedCountryCode + phone},
-    // ).timeout(const Duration(seconds: 10));
-
-    // print('Response status code: ${response.statusCode}'); // Temporarily removed
-    // print('Response body: ${response.body}'); // Temporarily removed
-
-    // if (!mounted) return; // Temporarily removed
-
-    // final result = jsonDecode(response.body); // Temporarily removed
-
-    // if (result['status'] == 'success') { // Temporarily removed
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => VerificationScreen(phoneNumber: phone), // Pass phone directly
+        builder: (context) => VerificationScreen(
+          phoneNumber: phone,
+          countryCode: _selectedCountryCode,
+          countryName: _selectedCountryName,
+        ),
       ),
     );
-    // } else { // Temporarily removed
-    //   _showMessage(result['message'] ?? 'Login failed. Please try again.');
-    // }
-
-    // if (mounted) { // Temporarily removed
-    //   setState(() {
-    //     _isLoading = false;
-    //   });
-    // }
   }
 
   void _showMessage(String message) {
@@ -91,6 +65,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 onChanged: (countryCode) {
                   setState(() {
                     _selectedCountryCode = countryCode.dialCode ?? "+94";
+                    _selectedCountryName = countryCode.name ?? "Unknown Country"; // Update country name
                   });
                 },
                 initialSelection: 'LK',
@@ -153,8 +128,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 10),
               ),
-              onPressed: _login, // Changed from: _isLoading ? null : _login
-              child: const Text('Continue'), // Changed from: _isLoading ? CircularProgressIndicator : Text
+              onPressed: _login,
+              child: const Text('Continue'),
             ),
             const SizedBox(height: 20),
             const Text('or'),
