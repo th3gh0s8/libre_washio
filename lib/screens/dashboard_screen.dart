@@ -27,9 +27,9 @@ class DashboardScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => ProfileScreen(
-                    phoneNumber: phoneNumber,
-                    countryCode: countryCode,
-                    countryName: countryName,
+                    initialPhoneNumber: phoneNumber, // Corrected parameter name
+                    initialCountryCode: countryCode, // Corrected parameter name
+                    initialCountryName: countryName, // Corrected parameter name
                   ),
                 ),
               );
@@ -39,7 +39,7 @@ class DashboardScreen extends StatelessWidget {
       ),
       body: const Center(
         child: Text(
-          'Welcome to Washio!', // Corrected text
+          'Welcome to Washio!',
           style: TextStyle(fontSize: 24),
         ),
       ),
