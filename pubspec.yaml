@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^1.2.0
   shared_preferences: ^2.2.2
+  country_code_picker: ^3.0.0 # Added country_code_picker
 
 dev_dependencies:
   flutter_test:
@@ -92,3 +93,4 @@ flutter:
   assets:
     - assets/images/logo_light.jpeg
     - assets/images/logo_light.png
+    - assets/images/google_logo.png # Added Google logo
