@@ -23,7 +23,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _addressController = TextEditingController(); // Added address field
+  final TextEditingController _addressController = TextEditingController(); 
 
   bool _isLoading = false;
 
@@ -35,38 +35,39 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
       String name = _nameController.text;
       String email = _emailController.text;
-      String address = _addressController.text; // Get address
+      String address = _addressController.text; 
 
       try {
         final response = await ApiService.registerUser(
           name: name,
           email: email,
-          phone: widget.phoneNumber, // Local part of the phone number
+          phone: widget.phoneNumber, 
           countryCode: widget.countryCode,
-          address: address.isNotEmpty ? address : null, // Pass address if not empty
+          address: address.isNotEmpty ? address : null, 
         );
 
         if (mounted) {
           if (response['status'] == 'success') {
-            // Registration successful, navigate to Dashboard
-            // Optional: Save user session/details here
-            // SharedPreferences prefs = await SharedPreferences.getInstance();
-            // await prefs.setInt('user_id', response['user_id']);
-            // await prefs.setString('user_phone', widget.countryCode + widget.phoneNumber);
-            // await prefs.setBool('is_logged_in', true);
+            Map<String, dynamic>? newUserData = response['user_data'] as Map<String, dynamic>?;
 
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(
-                builder: (context) => DashboardScreen(
-                  phoneNumber: widget.phoneNumber,
-                  countryCode: widget.countryCode,
-                  countryName: "", // Pass countryName if available and needed
-                  // You might want to pass the newly created user ID or full user object here
+            if (newUserData != null) {
+              // Registration successful, navigate to Dashboard with the new user data
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DashboardScreen(
+                    userData: newUserData, // Pass the new user data map
+                  ),
                 ),
-              ),
-              (Route<dynamic> route) => false, // Remove all previous routes
-            );
+                (Route<dynamic> route) => false, // Remove all previous routes
+              );
+            } else {
+              // This case should ideally not happen if API is consistent
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Registration successful, but user data was not returned. Please try logging in.')),
+              );
+              // Potentially navigate to a login screen or show a more specific error
+            }
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(response['message'] ?? 'Registration failed. Please try again.')),
@@ -93,7 +94,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
-    _addressController.dispose(); // Dispose address controller
+    _addressController.dispose(); 
     super.dispose();
   }
 
@@ -157,7 +158,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.home),
                 ),
-                // No validator, as it's optional for now
               ),
               const SizedBox(height: 24),
               ElevatedButton(

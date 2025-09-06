@@ -29,8 +29,6 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
-$full_phone_number_for_check = $country_code . $phone;
-
 // Start transaction
 $conn->begin_transaction();
 
@@ -45,7 +43,7 @@ try {
     $result_check_user = $stmt_check_user->get_result();
     if ($result_check_user->num_rows > 0) {
         $stmt_check_user->close();
-        $conn->rollback(); // No need to proceed if user already exists by some chance
+        $conn->rollback(); 
         echo json_encode(['status' => 'error', 'message' => 'User with this phone number already exists.']);
         exit;
     }
@@ -67,33 +65,44 @@ try {
     }
     $stmt_check_email->close();
 
-    // Insert new user
-    // Columns: id, name, email, phone, country_code, profile_image, address, wallet_balance, role, is_active, created_at, updated_at
     $default_role = 'user';
     $default_wallet_balance = 0.00;
     $default_is_active = 1;
-    // profile_image can be NULL or a default path string
+    $address_to_save = (empty($address) || is_null($address)) ? NULL : $address;
 
     $sql_insert_user = "INSERT INTO users (name, email, phone, country_code, address, wallet_balance, role, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
     $stmt_insert_user = $conn->prepare($sql_insert_user);
     if (!$stmt_insert_user) {
         throw new Exception("User insertion statement preparation failed: " . $conn->error);
     }
-    // Types: s (name), s (email), s (phone), s (country_code), s (address), d (wallet_balance), s (role), i (is_active)
-    $stmt_insert_user->bind_param("sssssdsi", $name, $email, $phone, $country_code, $address, $default_wallet_balance, $default_role, $default_is_active);
+    $stmt_insert_user->bind_param("sssssdsi", $name, $email, $phone, $country_code, $address_to_save, $default_wallet_balance, $default_role, $default_is_active);
     
     if ($stmt_insert_user->execute()) {
         $new_user_id = $stmt_insert_user->insert_id;
+        $stmt_insert_user->close(); // Close before preparing new statement
+
+        // Fetch the newly created user's full data
+        $stmt_get_new_user = $conn->prepare("SELECT id, name, email, phone, country_code, profile_image, address, wallet_balance, role, is_active FROM users WHERE id = ?");
+        if (!$stmt_get_new_user) {
+            throw new Exception("Failed to prepare statement to fetch new user data: " . $conn->error);
+        }
+        $stmt_get_new_user->bind_param("i", $new_user_id);
+        if (!$stmt_get_new_user->execute()) {
+            throw new Exception("Failed to execute statement to fetch new user data: " . $stmt_get_new_user->error);
+        }
+        $new_user_data_result = $stmt_get_new_user->get_result();
+        $new_user_data = $new_user_data_result->fetch_assoc();
+        $stmt_get_new_user->close();
+
         $conn->commit();
         echo json_encode([
             'status' => 'success',
             'message' => 'User registered successfully.',
-            'user_id' => $new_user_id
+            'user_data' => $new_user_data // Send back the new user's data
         ]);
     } else {
         throw new Exception("Failed to register user: " . $stmt_insert_user->error);
     }
-    $stmt_insert_user->close();
 
 } catch (Exception $e) {
     $conn->rollback();

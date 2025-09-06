@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../api.dart'; 
 import 'dashboard_screen.dart';
-import 'registration_screen.dart'; // Placeholder for the new registration screen
-// import 'package:shared_preferences/shared_preferences.dart'; // For future session management
+import 'registration_screen.dart'; 
+// import 'package:shared_preferences/shared_preferences.dart';
 
 class VerificationScreen extends StatefulWidget {
-  final String phoneNumber;
-  final String countryCode;
+  final String phoneNumber; 
+  final String countryCode; 
   final String countryName;
 
   const VerificationScreen({
@@ -54,39 +54,40 @@ class _VerificationScreenState extends State<VerificationScreen> {
       _isLoading = true;
     });
 
-    final String fullPhoneNumber = widget.countryCode + widget.phoneNumber;
-
     try {
-      final response = await ApiService.verifyOtp(fullPhoneNumber, otp);
+      final response = await ApiService.verifyOtp(widget.countryCode, widget.phoneNumber, otp);
 
       if (mounted) {
         if (response['status'] == 'success') {
           bool userExists = response['user_exists'] ?? false;
-          // dynamic userData = response['user_data']; // Available if needed
+          Map<String, dynamic>? userData = response['user_data'] as Map<String, dynamic>?;
 
-          if (userExists) {
-            // User is registered, go to Dashboard
-            // TODO: Optionally save user session here using userData
+          if (userExists && userData != null) {
+            // User exists, pass their data to DashboardScreen
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                 builder: (context) => DashboardScreen(
-                  phoneNumber: widget.phoneNumber,
-                  countryCode: widget.countryCode,
-                  countryName: widget.countryName, 
-                  // userData: userData, // You could pass user data if DashboardScreen expects it
+                  // Pass the full user data object
+                  userData: userData, 
                 ),
               ),
             );
+          } else if (userExists && userData == null) {
+            // Should not happen if API is consistent, but handle defensively
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('User exists but data is missing. Please try again.')),
+            );
+            // Potentially navigate to login or show an error screen
           } else {
-            // User is not registered, go to RegistrationScreen
+            // User does not exist, go to RegistrationScreen
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                 builder: (context) => RegistrationScreen(
                   phoneNumber: widget.phoneNumber,
                   countryCode: widget.countryCode,
-                  // countryName: widget.countryName, // Pass if needed by RegistrationScreen
+                  // countryName: widget.countryName, // Pass if needed
                 ),
               ),
             );
@@ -156,12 +157,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
     setState(() {
       _isLoading = true; 
     });
-    final formattedCountryCode = widget.countryCode.startsWith('+') 
-        ? widget.countryCode.replaceAll(' ', '') 
-        : '+' + widget.countryCode.replaceAll(' ', '');
-
     try {
-      final response = await ApiService.requestOtp(widget.phoneNumber, formattedCountryCode);
+      final response = await ApiService.requestOtp(widget.phoneNumber, widget.countryCode);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(response['message'] ?? 'OTP Resent (check server log for OTP).')),
