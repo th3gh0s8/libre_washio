@@ -60,7 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     currentEmail: email,
                     currentPhoneNumber: phoneNumber,
                     currentCountryCode: countryCode, // Pass even if not directly editable for context
-                    currentCountryName: countryName, // Pass even if not directly editable for context
+                    currentCountryName: countryName, userData: {}, // Pass even if not directly editable for context
                   ),
                 ),
               );
