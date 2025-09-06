@@ -23,13 +23,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        // Corrected: Only pass userData as EditProfileScreen constructor expects
         builder: (context) => EditProfileScreen(userData: _userData),
       ),
     );
 
     if (result != null && result is Map<String, dynamic>) {
-      // If EditProfileScreen returned updated data, update the state
       setState(() {
         _userData = result;
       });
@@ -39,9 +37,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     String userName = _userData['name']?.toString() ?? 'User';
-    // You can also ensure other fields are safely converted to string if displayed directly
-    // String userEmail = _userData['email']?.toString() ?? 'No email';
-    // String displayPhone = "${_userData['country_code']?.toString() ?? ''}${_userData['phone']?.toString() ?? ''}";
 
     return Scaffold(
       appBar: AppBar(
@@ -49,8 +44,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         automaticallyImplyLeading: false, 
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_note), 
-            tooltip: 'Edit Profile',
+            icon: const Icon(Icons.account_circle), // Changed icon
+            tooltip: 'Profile', // Updated tooltip
             onPressed: _navigateToEditProfile,
           ),
         ],

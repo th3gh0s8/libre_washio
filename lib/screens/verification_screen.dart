@@ -63,31 +63,25 @@ class _VerificationScreenState extends State<VerificationScreen> {
           Map<String, dynamic>? userData = response['user_data'] as Map<String, dynamic>?;
 
           if (userExists && userData != null) {
-            // User exists, pass their data to DashboardScreen
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                 builder: (context) => DashboardScreen(
-                  // Pass the full user data object
                   userData: userData, 
                 ),
               ),
             );
           } else if (userExists && userData == null) {
-            // Should not happen if API is consistent, but handle defensively
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('User exists but data is missing. Please try again.')),
             );
-            // Potentially navigate to login or show an error screen
           } else {
-            // User does not exist, go to RegistrationScreen
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                 builder: (context) => RegistrationScreen(
                   phoneNumber: widget.phoneNumber,
                   countryCode: widget.countryCode,
-                  // countryName: widget.countryName, // Pass if needed
                 ),
               ),
             );
@@ -218,7 +212,18 @@ class _VerificationScreenState extends State<VerificationScreen> {
             const SizedBox(height: 30),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
+                foregroundColor: Colors.white,               
+                backgroundColor: Colors.blue,                
+                minimumSize: const Size(double.infinity, 50), 
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10), 
+                ),
+                elevation: 5,                                
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 10), 
               ),
               onPressed: _isLoading ? null : _verifyCode,
               child: _isLoading 

@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   //static const String baseUrl = "http://washio_api.dvl.to/";
-  static const String baseUrl = "http://192.168.1.10/washio_api/"; // Ensure this IP is correct for your XAMPP server
+  static const String baseUrl = "http://192.168.1.9/washio_api/"; // Ensure this IP is correct for your XAMPP server
 
   static Future<Map<String, dynamic>> getUserDetails(int userId) async {
     final url = Uri.parse('${baseUrl}get_user_details.php?userId=$userId');
