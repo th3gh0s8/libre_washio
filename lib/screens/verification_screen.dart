@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Added this import for LogicalKeyboardKey
-import '../api.dart'; // Import your ApiService
+import 'package:flutter/services.dart';
+import '../api.dart'; 
 import 'dashboard_screen.dart';
+import 'registration_screen.dart'; // Placeholder for the new registration screen
 // import 'package:shared_preferences/shared_preferences.dart'; // For future session management
 
 class VerificationScreen extends StatefulWidget {
   final String phoneNumber;
   final String countryCode;
-  final String countryName; // Keep if needed for display or other logic
+  final String countryName;
 
   const VerificationScreen({
     Key? key,
@@ -53,8 +54,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
       _isLoading = true;
     });
 
-    // Construct full phone number. Ensure countryCode starts with + and has no spaces.
-    // WelcomeScreen already formats countryCode, so it should be fine here.
     final String fullPhoneNumber = widget.countryCode + widget.phoneNumber;
 
     try {
@@ -62,25 +61,36 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
       if (mounted) {
         if (response['status'] == 'success') {
-          // OTP Verified!
-          // Optional: Save user session/details if user_exists is true and user_data is available
-          // For example:
-          // if (response['user_exists'] == true && response['user_data'] != null) {
-          //   SharedPreferences prefs = await SharedPreferences.getInstance();
-          //   await prefs.setString('user_token', response['user_data']['id'].toString()); // Example token/id
-          //   await prefs.setString('user_phone', fullPhoneNumber);
-          // }
+          bool userExists = response['user_exists'] ?? false;
+          // dynamic userData = response['user_data']; // Available if needed
 
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DashboardScreen(
-                phoneNumber: widget.phoneNumber, // Or fullPhoneNumber
-                countryCode: widget.countryCode,
-                countryName: widget.countryName, 
+          if (userExists) {
+            // User is registered, go to Dashboard
+            // TODO: Optionally save user session here using userData
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DashboardScreen(
+                  phoneNumber: widget.phoneNumber,
+                  countryCode: widget.countryCode,
+                  countryName: widget.countryName, 
+                  // userData: userData, // You could pass user data if DashboardScreen expects it
+                ),
               ),
-            ),
-          );
+            );
+          } else {
+            // User is not registered, go to RegistrationScreen
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => RegistrationScreen(
+                  phoneNumber: widget.phoneNumber,
+                  countryCode: widget.countryCode,
+                  // countryName: widget.countryName, // Pass if needed by RegistrationScreen
+                ),
+              ),
+            );
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(response['message'] ?? 'Invalid OTP. Please try again.')),
@@ -132,7 +142,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
               FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
             } else {
               _focusNodes[index].unfocus(); 
-              // If all fields are filled, automatically attempt to verify
               if (_codeControllers.every((controller) => controller.text.isNotEmpty)) {
                  _verifyCode();
               }
@@ -143,12 +152,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
     );
   }
 
-  // TODO: Implement Resend OTP logic - requires an API call
   Future<void> _resendOtp() async {
     setState(() {
-      _isLoading = true; // Can use the same loading state or a different one
+      _isLoading = true; 
     });
-    // Ensure country code always starts with + and has no extra spaces
     final formattedCountryCode = widget.countryCode.startsWith('+') 
         ? widget.countryCode.replaceAll(' ', '') 
         : '+' + widget.countryCode.replaceAll(' ', '');
@@ -223,7 +230,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
             ),
             const SizedBox(height: 20),
             TextButton(
-              onPressed: _isLoading ? null : _resendOtp, // Call _resendOtp
+              onPressed: _isLoading ? null : _resendOtp,
               child: const Text('Resend OTP'),
             )
           ],
