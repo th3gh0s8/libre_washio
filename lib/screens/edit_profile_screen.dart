@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import '../api.dart'; // For ApiService.updateUserDetails
+import 'package:provider/provider.dart'; // Import Provider
+import '../theme_provider.dart'; // Assuming theme_provider.dart is in lib/
+import '../api.dart'; 
 
 class EditProfileScreen extends StatefulWidget {
-  final Map<String, dynamic> userData; // Expecting user data map
+  final Map<String, dynamic> userData;
 
-  // Simplified constructor, only takes userData
   const EditProfileScreen({Key? key, required this.userData}) : super(key: key);
 
   @override
@@ -20,6 +21,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   int? _userId;
 
   bool _isLoading = false;
+  // bool _isDarkModeEnabled = false; // Removed: state now managed by ThemeProvider
 
   @override
   void initState() {
@@ -32,6 +34,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     
     String phone = widget.userData['phone']?.toString() ?? ''; 
     _displayPhone = phone; 
+
+    // No need to initialize _isDarkModeEnabled here from ThemeProvider for the build method,
+    // as Provider.of(context) in build will provide the current state.
   }
 
   Future<void> _saveChanges() async {
@@ -93,9 +98,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Get the current theme provider
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Profile'),
+        actions: [
+          IconButton(
+            icon: Icon(themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode),
+            tooltip: themeProvider.isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+            onPressed: () {
+              // Toggle theme using the provider
+              themeProvider.toggleTheme();
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -175,7 +193,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 onPressed: _isLoading ? null : _saveChanges,
                 child: _isLoading
                     ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white))
-                    : const Text('Save Changes'), // fontSize is handled by the style
+                    : const Text('Save Changes'), 
               ),
             ],
           ),
