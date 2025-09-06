@@ -51,22 +51,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             Map<String, dynamic>? newUserData = response['user_data'] as Map<String, dynamic>?;
 
             if (newUserData != null) {
-              // Registration successful, navigate to Dashboard with the new user data
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
                   builder: (context) => DashboardScreen(
-                    userData: newUserData, // Pass the new user data map
+                    userData: newUserData, 
                   ),
                 ),
-                (Route<dynamic> route) => false, // Remove all previous routes
+                (Route<dynamic> route) => false, 
               );
             } else {
-              // This case should ideally not happen if API is consistent
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Registration successful, but user data was not returned. Please try logging in.')),
               );
-              // Potentially navigate to a login screen or show a more specific error
             }
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -162,13 +159,23 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               const SizedBox(height: 24),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  minimumSize: const Size(double.infinity, 50),
+                  foregroundColor: Colors.white,               
+                  backgroundColor: Colors.blue,                
+                  minimumSize: const Size(double.infinity, 50), 
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10), 
+                  ),
+                  elevation: 5,                                
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 10), 
                 ),
                 onPressed: _isLoading ? null : _registerUser,
                 child: _isLoading
                     ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white))
-                    : const Text('Complete Registration', style: TextStyle(fontSize: 16)),
+                    : const Text('Complete Registration'), // fontSize is handled by the style
               ),
             ],
           ),

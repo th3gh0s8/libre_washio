@@ -24,17 +24,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // Ensure ID is correctly typed (int)
     _userId = widget.userData['id'] as int?;
     
-    // Explicitly convert userData values to String for TextEditingControllers and display
     _nameController = TextEditingController(text: widget.userData['name']?.toString() ?? '');
     _emailController = TextEditingController(text: widget.userData['email']?.toString() ?? '');
     _addressController = TextEditingController(text: widget.userData['address']?.toString() ?? '');
     
-    String countryCode = widget.userData['country_code']?.toString() ?? '';
-    String phone = widget.userData['phone']?.toString() ?? ''; // Most likely culprit for int to String error
-    _displayPhone = countryCode + phone; 
+    String phone = widget.userData['phone']?.toString() ?? ''; 
+    _displayPhone = phone; 
   }
 
   Future<void> _saveChanges() async {
@@ -63,7 +60,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Profile updated successfully!')),
             );
-            Navigator.pop(context, response['user_data']); // Return updated data
+            Navigator.pop(context, response['user_data']); 
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(response['message'] ?? 'Failed to update profile.')),
@@ -162,13 +159,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               const SizedBox(height: 30),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  minimumSize: const Size(double.infinity, 50),
+                  foregroundColor: Colors.white,               
+                  backgroundColor: Colors.blue,                
+                  minimumSize: const Size(double.infinity, 50), 
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10), 
+                  ),
+                  elevation: 5,                                
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 10), 
                 ),
                 onPressed: _isLoading ? null : _saveChanges,
                 child: _isLoading
                     ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white))
-                    : const Text('Save Changes', style: TextStyle(fontSize: 16)),
+                    : const Text('Save Changes'), // fontSize is handled by the style
               ),
             ],
           ),

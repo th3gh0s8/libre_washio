@@ -50,7 +50,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   String _selectedCountryIsoCode = "LK"; 
   bool _isLoading = false;
 
-  // Initialize with LK rule as it's the initial selection
   PhoneNumberRule _currentPhoneRule = PhoneNumberRule(inputLength: 9, actualLength: 9, forbidLeadingZero: true);
 
   final Map<String, PhoneNumberRule> _countryPhoneRules = {
@@ -92,7 +91,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
       if (mounted) {
         if (response['status'] == 'success') {
-          Navigator.pushReplacement(
+          // Changed from pushReplacement to push to allow back navigation
+          Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => VerificationScreen(
