@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'edit_profile_screen.dart'; // Import the new EditProfileScreen
-// import 'profile_screen.dart'; // Old profile screen, can be removed if EditProfileScreen replaces it
 
 class DashboardScreen extends StatefulWidget {
   final Map<String, dynamic> userData; // Expecting the full user data map
@@ -24,6 +23,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
+        // Corrected: Only pass userData as EditProfileScreen constructor expects
         builder: (context) => EditProfileScreen(userData: _userData),
       ),
     );
@@ -38,19 +38,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Extract user's name for display, provide a default if not found
-    String userName = _userData['name'] as String? ?? 'User';
-    // You can extract other fields like email, address, phone, country_code from _userData as needed
-    // String userEmail = _userData['email'] as String? ?? 'No email';
-    // String displayPhone = "${_userData['country_code'] ?? ''}${_userData['phone'] ?? ''}";
+    String userName = _userData['name']?.toString() ?? 'User';
+    // You can also ensure other fields are safely converted to string if displayed directly
+    // String userEmail = _userData['email']?.toString() ?? 'No email';
+    // String displayPhone = "${_userData['country_code']?.toString() ?? ''}${_userData['phone']?.toString() ?? ''}";
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
-        automaticallyImplyLeading: false, // To prevent back button to previous screens in auth flow
+        automaticallyImplyLeading: false, 
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_note), // Changed icon to represent editing profile
+            icon: const Icon(Icons.edit_note), 
             tooltip: 'Edit Profile',
             onPressed: _navigateToEditProfile,
           ),
@@ -68,11 +67,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
-              // You can add more user details here if needed:
-              // Text("Email: $userEmail", style: TextStyle(fontSize: 16)),
-              // Text("Phone: $displayPhone", style: TextStyle(fontSize: 16)),
-              // if (_userData['address'] != null && (_userData['address'] as String).isNotEmpty)
-              //   Text("Address: ${_userData['address']}", style: TextStyle(fontSize: 16)),
               const SizedBox(height: 30),
               const Text(
                 'This is your Washio Dashboard.',

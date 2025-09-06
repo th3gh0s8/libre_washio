@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../api.dart'; // For ApiService.updateUserDetails
-// import 'package:shared_preferences/shared_preferences.dart'; // For managing user session/data
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> userData; // Expecting user data map
 
+  // Simplified constructor, only takes userData
   const EditProfileScreen({Key? key, required this.userData}) : super(key: key);
 
   @override
@@ -16,7 +16,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _addressController;
-  // Phone number is typically not editable directly here, or requires re-verification
   String _displayPhone = ""; 
   int? _userId;
 
@@ -25,13 +24,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _userId = widget.userData['id'] as int?; // Ensure ID is correctly typed (int)
-    _nameController = TextEditingController(text: widget.userData['name'] ?? '');
-    _emailController = TextEditingController(text: widget.userData['email'] ?? '');
-    _addressController = TextEditingController(text: widget.userData['address'] ?? '');
+    // Ensure ID is correctly typed (int)
+    _userId = widget.userData['id'] as int?;
     
-    String countryCode = widget.userData['country_code'] ?? '';
-    String phone = widget.userData['phone'] ?? '';
+    // Explicitly convert userData values to String for TextEditingControllers and display
+    _nameController = TextEditingController(text: widget.userData['name']?.toString() ?? '');
+    _emailController = TextEditingController(text: widget.userData['email']?.toString() ?? '');
+    _addressController = TextEditingController(text: widget.userData['address']?.toString() ?? '');
+    
+    String countryCode = widget.userData['country_code']?.toString() ?? '';
+    String phone = widget.userData['phone']?.toString() ?? ''; // Most likely culprit for int to String error
     _displayPhone = countryCode + phone; 
   }
 
@@ -61,9 +63,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Profile updated successfully!')),
             );
-            // TODO: Update local user data state (e.g., using a state manager or callback)
-            // For now, just pop.
-            Navigator.pop(context, response['user_data']); // Optionally return updated data
+            Navigator.pop(context, response['user_data']); // Return updated data
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(response['message'] ?? 'Failed to update profile.')),
@@ -158,7 +158,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   prefixIcon: Icon(Icons.home),
                   hintText: 'Enter your address (optional)',
                 ),
-                // Address is optional, so no validator needed unless specific rules apply
               ),
               const SizedBox(height: 30),
               ElevatedButton(
