@@ -1,11 +1,11 @@
 <?php
-$host = "mysql";
+$host = "localhost"; // Changed from "mysql" to "localhost"
 $user = "root";
 $pass = "";
 $db   = "washio";
 
 $conn = new mysqli($host, $user, $pass, $db);
-if ($conn->connect_error) {
-  die("Connection failed: " . $conn->connect_error);
-}
+
+// The calling script should check $conn->connect_error
+// and handle JSON error reporting itself.
 ?>
