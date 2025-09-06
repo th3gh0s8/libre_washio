@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 import '../api.dart'; // Import ApiService
-import 'dashboard_screen.dart'; // Import DashboardScreen
-// import 'package:shared_preferences/shared_preferences.dart'; // For future session management
+import 'dashboard_screen.dart'; // This file now contains AppShell
 
 class RegistrationScreen extends StatefulWidget {
   final String phoneNumber;
   final String countryCode;
-  // final String countryName; // Add if you need to pass it to DashboardScreen
 
   const RegistrationScreen({
     Key? key,
     required this.phoneNumber,
     required this.countryCode,
-    // this.countryName = "", 
   }) : super(key: key);
 
   @override
@@ -51,14 +48,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             Map<String, dynamic>? newUserData = response['user_data'] as Map<String, dynamic>?;
 
             if (newUserData != null) {
+              // Registration successful, navigate to AppShell with the new user data
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => DashboardScreen(
+                  builder: (context) => AppShell( // Navigate to AppShell
                     userData: newUserData, 
                   ),
                 ),
-                (Route<dynamic> route) => false, 
+                (Route<dynamic> route) => false, // Remove all previous routes
               );
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -175,7 +173,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 onPressed: _isLoading ? null : _registerUser,
                 child: _isLoading
                     ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white))
-                    : const Text('Complete Registration'), // fontSize is handled by the style
+                    : const Text('Complete Registration'),
               ),
             ],
           ),

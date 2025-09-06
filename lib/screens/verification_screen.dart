@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../api.dart'; 
-import 'dashboard_screen.dart';
+import 'dashboard_screen.dart'; // This file now contains AppShell
 import 'registration_screen.dart'; 
-// import 'package:shared_preferences/shared_preferences.dart';
 
 class VerificationScreen extends StatefulWidget {
   final String phoneNumber; 
@@ -63,19 +62,22 @@ class _VerificationScreenState extends State<VerificationScreen> {
           Map<String, dynamic>? userData = response['user_data'] as Map<String, dynamic>?;
 
           if (userExists && userData != null) {
-            Navigator.pushReplacement(
+            // User exists, navigate to AppShell with user data and clear stack
+            Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
-                builder: (context) => DashboardScreen(
+                builder: (context) => AppShell( // Navigate to AppShell
                   userData: userData, 
                 ),
               ),
+              (Route<dynamic> route) => false, // Clear all previous routes
             );
           } else if (userExists && userData == null) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('User exists but data is missing. Please try again.')),
             );
           } else {
+            // User does not exist, go to RegistrationScreen (this part remains the same)
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -152,10 +154,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
       _isLoading = true; 
     });
     try {
-      final response = await ApiService.requestOtp(widget.phoneNumber, widget.countryCode);
+      await ApiService.requestOtp(widget.phoneNumber, widget.countryCode);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response['message'] ?? 'OTP Resent (check server log for OTP).')),
+          const SnackBar(content: Text('A new OTP has been sent to your phone number.')),
         );
       }
     } catch (e) {

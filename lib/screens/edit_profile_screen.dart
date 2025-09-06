@@ -5,8 +5,13 @@ import '../api.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> userData;
+  final Function(Map<String, dynamic> updatedUserData)? onUserDataUpdated; // Callback
 
-  const EditProfileScreen({Key? key, required this.userData}) : super(key: key);
+  const EditProfileScreen({
+    Key? key, 
+    required this.userData,
+    this.onUserDataUpdated, // Add to constructor
+  }) : super(key: key);
 
   @override
   _EditProfileScreenState createState() => _EditProfileScreenState();
@@ -21,23 +26,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   int? _userId;
 
   bool _isLoading = false;
-  // bool _isDarkModeEnabled = false; // Removed: state now managed by ThemeProvider
 
   @override
   void initState() {
     super.initState();
+    _updateControllersFromWidgetData();
+  }
+
+  @override
+  void didUpdateWidget(covariant EditProfileScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If the userData passed to the widget changes, update the controllers
+    if (widget.userData != oldWidget.userData) {
+      _updateControllersFromWidgetData();
+    }
+  }
+
+  void _updateControllersFromWidgetData() {
     _userId = widget.userData['id'] as int?;
-    
     _nameController = TextEditingController(text: widget.userData['name']?.toString() ?? '');
     _emailController = TextEditingController(text: widget.userData['email']?.toString() ?? '');
     _addressController = TextEditingController(text: widget.userData['address']?.toString() ?? '');
-    
     String phone = widget.userData['phone']?.toString() ?? ''; 
     _displayPhone = phone; 
-
-    // No need to initialize _isDarkModeEnabled here from ThemeProvider for the build method,
-    // as Provider.of(context) in build will provide the current state.
+    // If a field was being edited and widget rebuilds with same data, selection might be lost.
+    // Storing and restoring selection is an advanced topic if this becomes an issue.
   }
+
 
   Future<void> _saveChanges() async {
     if (_formKey.currentState!.validate()) {
@@ -62,10 +77,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
         if (mounted) {
           if (response['status'] == 'success') {
+            Map<String, dynamic> updatedUserData = response['user_data'] ?? widget.userData;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Profile updated successfully!')),
             );
-            Navigator.pop(context, response['user_data']); 
+            
+            // Call the callback if provided
+            if (widget.onUserDataUpdated != null) {
+              widget.onUserDataUpdated!(updatedUserData);
+            }
+            
+            // Pop if this screen was pushed onto a navigator stack
+            // If it's directly in AppShell, pop might not be the intended behavior
+            // but AppShell will handle its own state update via the callback.
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context, updatedUserData); 
+            }
+
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(response['message'] ?? 'Failed to update profile.')),
@@ -98,18 +126,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Get the current theme provider
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Profile'),
+        title: const Text('Account'), // Changed title for consistency
+        automaticallyImplyLeading: false, // AppShell handles navigation
         actions: [
           IconButton(
             icon: Icon(themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode),
             tooltip: themeProvider.isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode',
             onPressed: () {
-              // Toggle theme using the provider
               themeProvider.toggleTheme();
             },
           ),
