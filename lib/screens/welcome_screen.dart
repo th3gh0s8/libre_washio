@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-// import 'package:http/http.dart' as http; // Temporarily commented out
-// import 'dart:convert'; // Temporarily commented out
 import 'package:country_code_picker/country_code_picker.dart';
-// import '../api.dart'; // Temporarily commented out
+import '../api.dart'; // Import your ApiService
 import 'verification_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -16,32 +14,66 @@ class WelcomeScreen extends StatefulWidget {
 class _WelcomeScreenState extends State<WelcomeScreen> {
   final _phoneController = TextEditingController();
   String _selectedCountryCode = "+94";
-  String _selectedCountryName = "Sri Lanka"; // Added state for country name
+  String _selectedCountryName = "Sri Lanka";
+  bool _isLoading = false; // State variable for loading indicator
 
-  void _login() {
+  Future<void> _login() async {
     final phone = _phoneController.text.trim();
 
     if (phone.isEmpty) {
-      _showMessage('Please fill in all fields.');
+      _showMessage('Please enter your mobile number.');
       return;
     }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => VerificationScreen(
-          phoneNumber: phone,
-          countryCode: _selectedCountryCode,
-          countryName: _selectedCountryName,
-        ),
-      ),
-    );
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Ensure country code always starts with + and has no extra spaces
+      final formattedCountryCode = _selectedCountryCode.startsWith('+') 
+          ? _selectedCountryCode.replaceAll(' ', '') 
+          : '+' + _selectedCountryCode.replaceAll(' ', '');
+
+      final response = await ApiService.requestOtp(phone, formattedCountryCode);
+
+      if (mounted) { // Check if the widget is still in the tree
+        if (response['status'] == 'success') {
+          // For testing, the PHP script returns the OTP. In production, you wouldn't show this.
+          // print('OTP from server (for testing): ${response["OTP"]}'); 
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => VerificationScreen(
+                phoneNumber: phone,
+                countryCode: formattedCountryCode,
+                countryName: _selectedCountryName,
+              ),
+            ),
+          );
+        } else {
+          _showMessage(response['message'] ?? 'Failed to send OTP. Please try again.');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showMessage('An error occurred: ${e.toString()}');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+        );
+    }
   }
 
   Widget buildMobileNumberField() {
@@ -65,7 +97,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 onChanged: (countryCode) {
                   setState(() {
                     _selectedCountryCode = countryCode.dialCode ?? "+94";
-                    _selectedCountryName = countryCode.name ?? "Unknown Country"; // Update country name
+                    _selectedCountryName = countryCode.name ?? "Unknown Country";
                   });
                 },
                 initialSelection: 'LK',
@@ -80,7 +112,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   inputFormatters: [
-                    LengthLimitingTextInputFormatter(10),
+                    LengthLimitingTextInputFormatter(10), // Adjust length as needed per country
                     FilteringTextInputFormatter.digitsOnly,
                   ],
                   decoration: const InputDecoration(
@@ -99,14 +131,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true, // Added for keyboard handling
-      body: SingleChildScrollView( // Added to make content scrollable
+      resizeToAvoidBottomInset: true,
+      body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(height: 20), // Added some top padding if needed when scrolled
+              const SizedBox(height: 20),
               Image.asset('assets/images/logo_light.png', height: 280),
               const SizedBox(height: 20),
               const Text(
@@ -131,8 +163,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 10),
                 ),
-                onPressed: _login,
-                child: const Text('Continue'),
+                onPressed: _isLoading ? null : _login, // Disable button when loading
+                child: _isLoading 
+                    ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white)) 
+                    : const Text('Continue'),
               ),
               const SizedBox(height: 20),
               const Text('or'),
@@ -164,7 +198,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 12),
               ),
-              const SizedBox(height: 20), // Added some bottom padding if needed when scrolled
+              const SizedBox(height: 20),
             ],
           ),
         ),
