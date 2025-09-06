@@ -11,14 +11,20 @@ if (!isset($conn) || $conn->connect_error) {
     exit;
 }
 
-$full_phone_number = $_POST['full_phone_number'] ?? null;
+// Expect separate country_code and local_phone_number
+$posted_country_code = $_POST['country_code'] ?? null;
+$posted_local_phone = $_POST['local_phone_number'] ?? null;
 $otp_entered = $_POST['otp'] ?? null;
 $code_from = 'login_otp'; // Ensure this matches what was used in request_otp.php
 
-if (!$full_phone_number || !$otp_entered) {
-    echo json_encode(['status' => 'error', 'message' => 'Phone number and OTP are required.']);
+if (!$posted_country_code || !$posted_local_phone || !$otp_entered) {
+    echo json_encode(['status' => 'error', 'message' => 'Country code, phone number, and OTP are required.']);
     exit;
 }
+
+// Reconstruct full phone number for OTP lookup in web_codes table,
+// as request_otp.php stores it concatenated.
+$full_phone_for_otp_lookup = $posted_country_code . $posted_local_phone;
 
 // Start transaction
 $conn->begin_transaction();
@@ -29,8 +35,8 @@ try {
     if (!$stmt_check) {
         throw new Exception("OTP check statement preparation failed: " . $conn->error);
     }
-    // Corrected bind_param to "sss" for 3 string parameters
-    $stmt_check->bind_param("sss", $full_phone_number, $otp_entered, $code_from);
+    // Use the reconstructed full phone number for this lookup
+    $stmt_check->bind_param("sss", $full_phone_for_otp_lookup, $otp_entered, $code_from);
     
     if (!$stmt_check->execute()) {
         throw new Exception("Failed to execute OTP check: " . $stmt_check->error);
@@ -42,28 +48,31 @@ try {
 
     if ($web_code_entry) {
         $web_code_id = $web_code_entry['id'];
-        // $userId_from_web_codes = $web_code_entry['userTb']; // Available if needed
 
         // Deactivate the OTP
         $stmt_deactivate = $conn->prepare("UPDATE web_codes SET isActive = 0 WHERE id = ?");
         if (!$stmt_deactivate) {
             throw new Exception("OTP deactivation statement preparation failed: " . $conn->error);
         }
-        $stmt_deactivate->bind_param("i", $web_code_id); // id is an integer
+        $stmt_deactivate->bind_param("i", $web_code_id);
         if (!$stmt_deactivate->execute()) {
             throw new Exception("Failed to deactivate OTP: " . $stmt_deactivate->error);
         }
         $stmt_deactivate->close();
 
         // At this point, OTP is verified. Now check if user exists in the 'users' table.
+        // Query users table using separate country_code and phone (local part)
         $user_exists = false;
         $user_data = null;
         
-        $stmt_find_user = $conn->prepare("SELECT id, name, email, phone, country_code, profile_image, address, wallet_balance, role, is_active FROM users WHERE CONCAT(country_code, phone) = ?");
+        // IMPORTANT: This assumes your users.country_code stores values like '+94' 
+        // and users.phone stores values like '771234567' (no leading national zero)
+        $stmt_find_user = $conn->prepare("SELECT id, name, email, phone, country_code, profile_image, address, wallet_balance, role, is_active FROM users WHERE country_code = ? AND phone = ?");
         if (!$stmt_find_user) {
             throw new Exception("User find statement preparation failed: " . $conn->error);
         }
-        $stmt_find_user->bind_param("s", $full_phone_number); // full_phone_number is a string
+        $stmt_find_user->bind_param("ss", $posted_country_code, $posted_local_phone);
+        
         if ($stmt_find_user->execute()) {
             $user_result = $stmt_find_user->get_result();
             if ($user_details = $user_result->fetch_assoc()) {
@@ -71,7 +80,6 @@ try {
                 $user_data = $user_details;
             }
         } else {
-             // Log error but don't necessarily fail the OTP verification if user check fails
             error_log("Failed to execute user find query: " . $stmt_find_user->error);
         }
         $stmt_find_user->close();
@@ -81,12 +89,11 @@ try {
             'status' => 'success', 
             'message' => 'OTP verified successfully.',
             'user_exists' => $user_exists,
-            'user_data' => $user_data // null if user does not exist
+            'user_data' => $user_data 
         ]);
 
     } else {
-        // OTP is invalid, inactive, expired, or for a different purpose
-        $conn->rollback(); // No changes made to web_codes if OTP wasn't found/valid
+        $conn->rollback();
         echo json_encode(['status' => 'error', 'message' => 'Invalid or expired OTP. Please try again.']);
     }
 

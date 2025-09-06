@@ -1,72 +1,76 @@
 import 'package:flutter/material.dart';
-import '../api.dart'; // For ApiService.updateUserDetails
-// import 'package:shared_preferences/shared_preferences.dart'; // For managing user session/data
+import '../api.dart'; // Import ApiService
+import 'dashboard_screen.dart'; // Import DashboardScreen
+// import 'package:shared_preferences/shared_preferences.dart'; // For future session management
 
-class EditProfileScreen extends StatefulWidget {
-  final Map<String, dynamic> userData; // Expecting user data map
+class RegistrationScreen extends StatefulWidget {
+  final String phoneNumber;
+  final String countryCode;
+  // final String countryName; // Add if you need to pass it to DashboardScreen
 
-  const EditProfileScreen({Key? key, required this.userData}) : super(key: key);
+  const RegistrationScreen({
+    Key? key,
+    required this.phoneNumber,
+    required this.countryCode,
+    // this.countryName = "", 
+  }) : super(key: key);
 
   @override
-  _EditProfileScreenState createState() => _EditProfileScreenState();
+  _RegistrationScreenState createState() => _RegistrationScreenState();
 }
 
-class _EditProfileScreenState extends State<EditProfileScreen> {
+class _RegistrationScreenState extends State<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _nameController;
-  late TextEditingController _emailController;
-  late TextEditingController _addressController;
-  // Phone number is typically not editable directly here, or requires re-verification
-  String _displayPhone = ""; 
-  int? _userId;
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController(); 
 
   bool _isLoading = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _userId = widget.userData['id'] as int?; // Ensure ID is correctly typed (int)
-    _nameController = TextEditingController(text: widget.userData['name'] ?? '');
-    _emailController = TextEditingController(text: widget.userData['email'] ?? '');
-    _addressController = TextEditingController(text: widget.userData['address'] ?? '');
-    
-    String countryCode = widget.userData['country_code'] ?? '';
-    String phone = widget.userData['phone'] ?? '';
-    _displayPhone = countryCode + phone; 
-  }
-
-  Future<void> _saveChanges() async {
+  Future<void> _registerUser() async {
     if (_formKey.currentState!.validate()) {
-      if (_userId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error: User ID is missing. Cannot update.')),
-        );
-        return;
-      }
-
       setState(() {
         _isLoading = true;
       });
 
+      String name = _nameController.text;
+      String email = _emailController.text;
+      String address = _addressController.text; 
+
       try {
-        final response = await ApiService.updateUserDetails(
-          userId: _userId!, 
-          name: _nameController.text,
-          email: _emailController.text,
-          address: _addressController.text.isNotEmpty ? _addressController.text : null,
+        final response = await ApiService.registerUser(
+          name: name,
+          email: email,
+          phone: widget.phoneNumber, 
+          countryCode: widget.countryCode,
+          address: address.isNotEmpty ? address : null, 
         );
 
         if (mounted) {
           if (response['status'] == 'success') {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Profile updated successfully!')),
-            );
-            // TODO: Update local user data state (e.g., using a state manager or callback)
-            // For now, just pop.
-            Navigator.pop(context, response['user_data']); // Optionally return updated data
+            Map<String, dynamic>? newUserData = response['user_data'] as Map<String, dynamic>?;
+
+            if (newUserData != null) {
+              // Registration successful, navigate to Dashboard with the new user data
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DashboardScreen(
+                    userData: newUserData, // Pass the new user data map
+                  ),
+                ),
+                (Route<dynamic> route) => false, // Remove all previous routes
+              );
+            } else {
+              // This case should ideally not happen if API is consistent
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Registration successful, but user data was not returned. Please try logging in.')),
+              );
+              // Potentially navigate to a login screen or show a more specific error
+            }
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(response['message'] ?? 'Failed to update profile.')),
+              SnackBar(content: Text(response['message'] ?? 'Registration failed. Please try again.')),
             );
           }
         }
@@ -90,7 +94,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
-    _addressController.dispose();
+    _addressController.dispose(); 
     super.dispose();
   }
 
@@ -98,7 +102,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Profile'),
+        title: const Text('Complete Your Profile'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -107,15 +111,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              if (_displayPhone.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 20.0),
-                  child: Text(
-                    'Phone: $_displayPhone',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
+              Text(
+                'Registering for: ${widget.countryCode} ${widget.phoneNumber}',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(
@@ -153,23 +154,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               TextFormField(
                 controller: _addressController,
                 decoration: const InputDecoration(
-                  labelText: 'Address',
+                  labelText: 'Address (Optional)',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.home),
-                  hintText: 'Enter your address (optional)',
                 ),
-                // Address is optional, so no validator needed unless specific rules apply
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 24),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
                   minimumSize: const Size(double.infinity, 50),
                 ),
-                onPressed: _isLoading ? null : _saveChanges,
+                onPressed: _isLoading ? null : _registerUser,
                 child: _isLoading
                     ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white))
-                    : const Text('Save Changes', style: TextStyle(fontSize: 16)),
+                    : const Text('Complete Registration', style: TextStyle(fontSize: 16)),
               ),
             ],
           ),

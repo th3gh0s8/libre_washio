@@ -4,6 +4,37 @@ import 'package:country_code_picker/country_code_picker.dart';
 import '../api.dart'; // Import your ApiService
 import 'verification_screen.dart';
 
+class PhoneNumberRule {
+  final int inputLength; 
+  final int actualLength;
+  final bool forbidLeadingZero;
+
+  PhoneNumberRule({
+    required this.inputLength,
+    required this.actualLength,
+    this.forbidLeadingZero = false,
+  });
+}
+
+class NoLeadingZeroFormatter extends TextInputFormatter {
+  final bool forbidLeadingZero;
+
+  NoLeadingZeroFormatter({required this.forbidLeadingZero});
+
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    if (forbidLeadingZero && newValue.text.isNotEmpty && newValue.text.startsWith('0')) {
+      String newText = newValue.text.substring(1);
+      return TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: newText.length),
+      );
+    }
+    return newValue; 
+  }
+}
+
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({Key? key}) : super(key: key);
 
@@ -12,40 +43,60 @@ class WelcomeScreen extends StatefulWidget {
 }
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
   String _selectedCountryCode = "+94";
   String _selectedCountryName = "Sri Lanka";
-  bool _isLoading = false; // State variable for loading indicator
+  String _selectedCountryIsoCode = "LK"; 
+  bool _isLoading = false;
+
+  // Initialize with LK rule as it's the initial selection
+  PhoneNumberRule _currentPhoneRule = PhoneNumberRule(inputLength: 9, actualLength: 9, forbidLeadingZero: true);
+
+  final Map<String, PhoneNumberRule> _countryPhoneRules = {
+    'LK': PhoneNumberRule(inputLength: 9, actualLength: 9, forbidLeadingZero: true),
+    'US': PhoneNumberRule(inputLength: 10, actualLength: 10, forbidLeadingZero: false),
+    'IN': PhoneNumberRule(inputLength: 10, actualLength: 10, forbidLeadingZero: false), 
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _updatePhoneRule(_selectedCountryIsoCode); 
+  }
+
+  void _updatePhoneRule(String countryIsoCode) {
+    setState(() {
+      _currentPhoneRule = _countryPhoneRules[countryIsoCode] ??
+          PhoneNumberRule(inputLength: 15, actualLength: 10, forbidLeadingZero: false); 
+    });
+  }
 
   Future<void> _login() async {
-    final phone = _phoneController.text.trim();
-
-    if (phone.isEmpty) {
-      _showMessage('Please enter your mobile number.');
+    if (!_formKey.currentState!.validate()) { 
       return;
     }
+
+    String phoneToSend = _phoneController.text.trim();
 
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // Ensure country code always starts with + and has no extra spaces
       final formattedCountryCode = _selectedCountryCode.startsWith('+') 
           ? _selectedCountryCode.replaceAll(' ', '') 
           : '+' + _selectedCountryCode.replaceAll(' ', '');
 
-      final response = await ApiService.requestOtp(phone, formattedCountryCode);
+      final response = await ApiService.requestOtp(phoneToSend, formattedCountryCode);
 
-      if (mounted) { // Check if the widget is still in the tree
+      if (mounted) {
         if (response['status'] == 'success') {
-          // For testing, the PHP script returns the OTP. In production, you wouldn't show this.
-          // print('OTP from server (for testing): ${response["OTP"]}'); 
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (context) => VerificationScreen(
-                phoneNumber: phone,
+                phoneNumber: phoneToSend,
                 countryCode: formattedCountryCode,
                 countryName: _selectedCountryName,
               ),
@@ -77,54 +128,70 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   Widget buildMobileNumberField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Mobile number',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(5.0),
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Mobile number',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
-          child: Row(
-            children: [
-              CountryCodePicker(
-                onChanged: (countryCode) {
-                  setState(() {
-                    _selectedCountryCode = countryCode.dialCode ?? "+94";
-                    _selectedCountryName = countryCode.name ?? "Unknown Country";
-                  });
-                },
-                initialSelection: 'LK',
-                favorite: const ['+94', 'LK'],
-                showCountryOnly: false,
-                showOnlyCountryWhenClosed: false,
-                alignLeft: false,
-              ),
-              const SizedBox(width: 5),
-              Expanded(
-                child: TextField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  inputFormatters: [
-                    LengthLimitingTextInputFormatter(10), // Adjust length as needed per country
-                    FilteringTextInputFormatter.digitsOnly,
-                  ],
-                  decoration: const InputDecoration(
-                    hintText: 'Mobile number',
-                    border: InputBorder.none,
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(5.0),
+            ),
+            child: Row(
+              children: [
+                CountryCodePicker(
+                  onChanged: (countryCode) {
+                    setState(() {
+                      _selectedCountryCode = countryCode.dialCode ?? "+94";
+                      _selectedCountryName = countryCode.name ?? "Unknown Country";
+                      _selectedCountryIsoCode = countryCode.code ?? "LK";
+                      _updatePhoneRule(_selectedCountryIsoCode);
+                      _phoneController.clear(); 
+                    });
+                  },
+                  initialSelection: _selectedCountryIsoCode, 
+                  favorite: const ['+94', 'LK', '+1', 'US', '+91', 'IN'],
+                  showCountryOnly: false,
+                  showOnlyCountryWhenClosed: false,
+                  alignLeft: false,
+                ),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: TextFormField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      NoLeadingZeroFormatter(forbidLeadingZero: _currentPhoneRule.forbidLeadingZero),
+                      LengthLimitingTextInputFormatter(_currentPhoneRule.inputLength),
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    decoration: const InputDecoration(
+                      hintText: 'Mobile number',
+                      border: InputBorder.none,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your mobile number.';
+                      }
+                      if (value.trim().length != _currentPhoneRule.actualLength) {
+                        return 'Enter a valid ${_currentPhoneRule.actualLength}-digit number for $_selectedCountryCode.';
+                      }
+                      return null;
+                    },
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -163,7 +230,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 10),
                 ),
-                onPressed: _isLoading ? null : _login, // Disable button when loading
+                onPressed: _isLoading ? null : _login,
                 child: _isLoading 
                     ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white)) 
                     : const Text('Continue'),
