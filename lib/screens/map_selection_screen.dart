@@ -13,18 +13,21 @@ class MapSelectionScreen extends StatefulWidget {
 
 class _MapSelectionScreenState extends State<MapSelectionScreen> {
   final Completer<GoogleMapController> _mapController = Completer();
-  LatLng _lastMapPosition = const LatLng(37.42796133580664, -122.085749655962); // Default to GooglePlex
+  LatLng _lastMapPosition = const LatLng(0, 0);
   final TextEditingController _searchController = TextEditingController();
 
-  static final CameraPosition _kGooglePlex = CameraPosition(
-    target: const LatLng(37.42796133580664, -122.085749655962),
-    zoom: 14.4746,
+  bool _locationFeaturesEnabled = false;
+  bool _isMapCenteredOnUser = false;
+  bool _isProgrammaticMove = false; // To track camera moves initiated by code
+
+  static final CameraPosition _kInitialNeutralView = CameraPosition(
+    target: const LatLng(0, 0),
+    zoom: 2.0,
   );
 
   @override
   void initState() {
     super.initState();
-    _goToCurrentUserLocation();
   }
 
   @override
@@ -34,20 +37,50 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
   }
 
   Future<void> _goToCurrentUserLocation() async {
+    if (!_locationFeaturesEnabled) {
+      if (mounted) {
+        setState(() {
+          _locationFeaturesEnabled = true;
+        });
+        await Future.delayed(const Duration(milliseconds: 300));
+      }
+    }
+
     final PermissionStatus permission = await Permission.locationWhenInUse.request();
 
     if (permission == PermissionStatus.granted) {
       try {
+        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!serviceEnabled) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Location services are disabled.')),
+            );
+          }
+          return;
+        }
+
         final Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
         );
         final GoogleMapController controller = await _mapController.future;
+
+        if (mounted) {
+          setState(() {
+            _isProgrammaticMove = true; // Indicate that the upcoming move is programmatic
+            _isMapCenteredOnUser = true; // Set centered state immediately for icon change
+            _lastMapPosition = LatLng(position.latitude, position.longitude);
+          });
+        }
+        
         controller.animateCamera(CameraUpdate.newCameraPosition(
           CameraPosition(
             target: LatLng(position.latitude, position.longitude),
-            zoom: 16.0, // Zoom in a bit more for current location
+            zoom: 16.0,
           ),
         ));
+        // Note: _isProgrammaticMove will be reset to false in _onCameraIdle
+
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -80,12 +113,33 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
     if (!_mapController.isCompleted) {
       _mapController.complete(controller);
     }
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _locationFeaturesEnabled = true;
+        });
+      }
+    });
   }
 
   void _onCameraMove(CameraPosition position) {
-    setState(() {
-      _lastMapPosition = position.target;
-    });
+    if (mounted) {
+      _lastMapPosition = position.target; // Always update the last known position
+      // If the move is not programmatic and the map was centered, un-center it.
+      if (!_isProgrammaticMove && _isMapCenteredOnUser) {
+        setState(() {
+          _isMapCenteredOnUser = false;
+        });
+      }
+    }
+  }
+
+  void _onCameraIdle() {
+    if (mounted && _isProgrammaticMove) {
+      setState(() {
+        _isProgrammaticMove = false; // Programmatic move has finished
+      });
+    }
   }
 
   void _selectLocation() {
@@ -126,11 +180,12 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
         children: <Widget>[
           GoogleMap(
             mapType: MapType.normal,
-            initialCameraPosition: _kGooglePlex, // Will be updated by _goToCurrentUserLocation if successful
+            initialCameraPosition: _kInitialNeutralView,
             onMapCreated: _onMapCreated,
             onCameraMove: _onCameraMove,
-            myLocationEnabled: true, 
-            myLocationButtonEnabled: true, 
+            onCameraIdle: _onCameraIdle, // Added camera idle callback
+            myLocationEnabled: _locationFeaturesEnabled,
+            myLocationButtonEnabled: _locationFeaturesEnabled,
             zoomControlsEnabled: true,
           ),
           const Center(
@@ -172,13 +227,36 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
               ),
             ),
           ),
+          if (_locationFeaturesEnabled)
+            Positioned(
+              bottom: 95.0,
+              right: 10.0,
+              child: FloatingActionButton(
+                mini: true,
+                backgroundColor: Colors.blue,
+                tooltip: _isMapCenteredOnUser ? 'Location centered' : 'My Location',
+                onPressed: _goToCurrentUserLocation,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder: (Widget child, Animation<double> animation) {
+                    return FadeTransition(opacity: animation, child: child);
+                  },
+                  child: Icon(
+                    _isMapCenteredOnUser ? Icons.gps_fixed : Icons.my_location,
+                    key: ValueKey<bool>(_isMapCenteredOnUser),
+                    color: _isMapCenteredOnUser ? Colors.white : Colors.red,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _selectLocation,
-        label: const Text('Select Current Center'),
-        icon: const Icon(Icons.location_on),
+        label: const Text('Select Current Center', style: TextStyle(color: Colors.white)),
+        icon: const Icon(Icons.location_on, color: Colors.white),
+        backgroundColor: Colors.blue,
       ),
     );
   }

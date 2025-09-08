@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import '../api.dart'; // Import your ApiService
 import 'verification_screen.dart';
+import 'dashboard_screen.dart'; // Import for AppShell
 
 class PhoneNumberRule {
   final int inputLength; 
@@ -58,6 +59,18 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     'IN': PhoneNumberRule(inputLength: 10, actualLength: 10, forbidLeadingZero: false), 
   };
 
+  // --- Test Account Credentials and Data ---
+  static const String _testCountryCode = "+94"; // Example: Sri Lanka
+  static const String _testPhoneNumber = "123456789"; // NEW: Example test number without leading zero
+  static final Map<String, dynamic> _testUserData = {
+    'id': 'test_user_001',
+    'name': 'Test User',
+    'phone': '+94123456789', // Updated to match the new test phone number
+    'email': 'test@example.com',
+    // Add any other fields your AppShell/DashboardScreen expects
+  };
+  // --- End Test Account --- 
+
   @override
   void initState() {
     super.initState();
@@ -76,28 +89,52 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       return;
     }
 
-    String phoneToSend = _phoneController.text.trim();
+    String phoneInput = _phoneController.text.trim();
+    String currentSelectedDialCode = _selectedCountryCode.startsWith('+') 
+          ? _selectedCountryCode.replaceAll(' ', '') 
+          : '+' + _selectedCountryCode.replaceAll(' ', '');
+
+    // --- Test Account Check ---
+    if (currentSelectedDialCode == _testCountryCode && phoneInput == _testPhoneNumber) {
+      setState(() {
+        _isLoading = true;
+      });
+      // Simulate a small delay, then navigate with test data
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => AppShell(userData: _testUserData)),
+          (Route<dynamic> route) => false, // Remove all previous routes
+        );
+      }
+      // No need to set _isLoading = false if we are navigating away permanently.
+      // However, if navigation could fail or be popped, then it's needed.
+      // For pushAndRemoveUntil, it's generally fine, but good practice to ensure it if there's any doubt.
+      if (mounted) { // Check mounted again in case of await
+          setState(() {
+            _isLoading = false;
+          });
+      }
+      return; // Exit if test account is used
+    }
+    // --- End Test Account Check ---
 
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final formattedCountryCode = _selectedCountryCode.startsWith('+') 
-          ? _selectedCountryCode.replaceAll(' ', '') 
-          : '+' + _selectedCountryCode.replaceAll(' ', '');
-
-      final response = await ApiService.requestOtp(phoneToSend, formattedCountryCode);
+      final response = await ApiService.requestOtp(phoneInput, currentSelectedDialCode);
 
       if (mounted) {
         if (response['status'] == 'success') {
-          // Changed from pushReplacement to push to allow back navigation
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => VerificationScreen(
-                phoneNumber: phoneToSend,
-                countryCode: formattedCountryCode,
+                phoneNumber: phoneInput,
+                countryCode: currentSelectedDialCode,
                 countryName: _selectedCountryName,
               ),
             ),
@@ -180,8 +217,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your mobile number.';
                       }
+                      // If it's the test number for the test country, consider it valid immediately.
+                      String currentSelectedDialCodeForValidation = _selectedCountryCode.startsWith('+') 
+                          ? _selectedCountryCode.replaceAll(' ', '') 
+                          : '+' + _selectedCountryCode.replaceAll(' ', '');
+                      if (currentSelectedDialCodeForValidation == _testCountryCode && value.trim() == _testPhoneNumber) {
+                        return null; // Test number is valid
+                      }
+                      // Regular validation for non-test numbers
                       if (value.trim().length != _currentPhoneRule.actualLength) {
-                        return 'Enter a valid ${_currentPhoneRule.actualLength}-digit number for $_selectedCountryCode.';
+                        return 'Enter a valid ${_currentPhoneRule.actualLength}-digit number for $_selectedCountryName.';
                       }
                       return null;
                     },
