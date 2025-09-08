@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart'; // For LatLng
 import 'edit_profile_screen.dart'; 
+import 'map_selection_screen.dart'; // Import the new map screen
 
 // --- AppShell Widget (Manages Bottom Navigation) ---
 class AppShell extends StatefulWidget {
@@ -20,13 +22,12 @@ class _AppShellState extends State<AppShell> {
   void initState() {
     super.initState();
     _currentActionUserData = widget.userData;
-    _initializeScreens(); // Initialize screens once with initial user data
+    _initializeScreens(); 
   }
 
   @override
   void didUpdateWidget(covariant AppShell oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // If the userData provided to AppShell itself changes, re-initialize
     if (widget.userData != oldWidget.userData) {
       setState(() {
         _currentActionUserData = widget.userData;
@@ -47,11 +48,9 @@ class _AppShellState extends State<AppShell> {
     ];
   }
 
-  // Callback for EditProfileScreen to update AppShell's user data
   void _handleUserDataUpdateFromProfile(Map<String, dynamic> newUserData) {
     setState(() {
       _currentActionUserData = newUserData;
-      // Re-initialize screens to ensure they all get the updated user data
       _initializeScreens(); 
     });
   }
@@ -65,9 +64,9 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack( // Use IndexedStack to keep state of screens
+      body: IndexedStack( 
         index: _selectedIndex,
-        children: _screens, // Use the state variable _screens
+        children: _screens, 
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -89,24 +88,47 @@ class _AppShellState extends State<AppShell> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue, // Or your theme's primary color
+        selectedItemColor: Colors.blue, 
         unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed, // To show all labels
+        type: BottomNavigationBarType.fixed, 
       ),
     );
   }
 }
 
 // --- DashboardScreen (Home tab content) ---
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget { 
   final Map<String, dynamic> userData;
 
   const DashboardScreen({Key? key, required this.userData}) : super(key: key);
 
   @override
+  _DashboardScreenState createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> { 
+  LatLng? _selectedCoordinates;
+  String _selectedLocationDisplay = "Not Set";
+
+  Future<void> _changeLocation() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const MapSelectionScreen()),
+    );
+
+    if (result != null && result is LatLng) {
+      setState(() {
+        _selectedCoordinates = result;
+        // For now, just display LatLng. In a real app, do reverse geocoding here.
+        _selectedLocationDisplay = "Lat: ${result.latitude.toStringAsFixed(4)}, Lng: ${result.longitude.toStringAsFixed(4)}";
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    String userName = userData['name']?.toString() ?? 'User';
+    String userName = widget.userData['name']?.toString() ?? 'User';
 
     return Scaffold(
       appBar: AppBar(
@@ -129,6 +151,16 @@ class DashboardScreen extends StatelessWidget {
                 'This is your Washio Dashboard.',
                 style: TextStyle(fontSize: 18),
                 textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 30),
+              Text(
+                'Current Location: $_selectedLocationDisplay',
+                style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: _changeLocation,
+                child: const Text('Change Location'),
               ),
             ],
           ),
