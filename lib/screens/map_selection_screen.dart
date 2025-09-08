@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart'; 
 
 class MapSelectionScreen extends StatefulWidget {
   const MapSelectionScreen({Key? key}) : super(key: key);
@@ -20,8 +21,6 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
   bool _isMapCenteredOnUser = false;
   bool _isProgrammaticMove = false;
 
-  // No longer using _effectiveInitialCameraPosition or _isInitializingMap for initial load handling by spinner
-
   static final CameraPosition _kInitialNeutralView = CameraPosition(
     target: const LatLng(0, 0),
     zoom: 2.0,
@@ -30,12 +29,9 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
   @override
   void initState() {
     super.initState();
-    // No initial setup here that would cause a loading screen before map display
   }
 
   Future<void> _animateToInitialCountryView() async {
-    // This function is called once the map is created.
-    // It attempts to get current location and animate to a country-level view.
     if (mounted) {
       try {
         final PermissionStatus permission = await Permission.locationWhenInUse.request();
@@ -49,13 +45,13 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
             if (mounted) {
               setState(() {
                 _isProgrammaticMove = true;
-                _isMapCenteredOnUser = true; // Reflecting that we are centering on a version of user location
+                _isMapCenteredOnUser = true; 
                 _lastMapPosition = LatLng(position.latitude, position.longitude);
               });
               controller.animateCamera(CameraUpdate.newCameraPosition(
                 CameraPosition(
                   target: LatLng(position.latitude, position.longitude),
-                  zoom: 6.0, // Country-level zoom
+                  zoom: 6.0, 
                 ),
               ));
             }
@@ -63,7 +59,6 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
         }
       } catch (e) {
         print('Error animating to initial country view: $e');
-        // If error, map stays at _kInitialNeutralView. _isMapCenteredOnUser remains false.
       }
     }
   }
@@ -148,10 +143,7 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
     if (!_mapController.isCompleted) {
       _mapController.complete(controller);
     }
-    // Animate to country view after map is created and controller is available.
     _animateToInitialCountryView();
-
-    // Enable other location features like blue dot and FAB after a slight delay
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         setState(() {
@@ -180,8 +172,47 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
     }
   }
 
-  void _selectLocation() {
-    Navigator.pop(context, _lastMapPosition);
+  Future<void> _selectLocation() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Fetching address...'), duration: Duration(seconds: 1)),
+    );
+
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        _lastMapPosition.latitude,
+        _lastMapPosition.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks.first;
+        String formattedAddress = "";
+        if (place.street != null && place.street!.isNotEmpty) formattedAddress += "${place.street}, ";
+        if (place.subLocality != null && place.subLocality!.isNotEmpty) formattedAddress += "${place.subLocality}, ";
+        if (place.locality != null && place.locality!.isNotEmpty) formattedAddress += "${place.locality}, ";
+        if (place.postalCode != null && place.postalCode!.isNotEmpty) formattedAddress += "${place.postalCode}, ";
+        if (place.country != null && place.country!.isNotEmpty) formattedAddress += "${place.country}";
+        
+        if (formattedAddress.endsWith(", ")) {
+            formattedAddress = formattedAddress.substring(0, formattedAddress.length - 2);
+        }
+
+        if (mounted) Navigator.pop(context, formattedAddress);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not find address for this location.')),
+          );
+          Navigator.pop(context, null); 
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error fetching address: ${e.toString()}')),
+        );
+        Navigator.pop(context, null); 
+      }
+    }
   }
 
   Future<void> _searchAndGoToLocation() async {
@@ -203,10 +234,9 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // No more _isInitializingMap check; Scaffold is built immediately.
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Location'),
+        title: const Text('Select Location'), // Title restored
         actions: [
           IconButton(
             icon: const Icon(Icons.check),
@@ -219,7 +249,7 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
         children: <Widget>[
           GoogleMap(
             mapType: MapType.normal,
-            initialCameraPosition: _kInitialNeutralView, // Always start with neutral view
+            initialCameraPosition: _kInitialNeutralView, 
             onMapCreated: _onMapCreated,
             onCameraMove: _onCameraMove,
             onCameraIdle: _onCameraIdle,
