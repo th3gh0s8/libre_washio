@@ -18,7 +18,9 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
 
   bool _locationFeaturesEnabled = false;
   bool _isMapCenteredOnUser = false;
-  bool _isProgrammaticMove = false; // To track camera moves initiated by code
+  bool _isProgrammaticMove = false;
+
+  // No longer using _effectiveInitialCameraPosition or _isInitializingMap for initial load handling by spinner
 
   static final CameraPosition _kInitialNeutralView = CameraPosition(
     target: const LatLng(0, 0),
@@ -28,6 +30,42 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
   @override
   void initState() {
     super.initState();
+    // No initial setup here that would cause a loading screen before map display
+  }
+
+  Future<void> _animateToInitialCountryView() async {
+    // This function is called once the map is created.
+    // It attempts to get current location and animate to a country-level view.
+    if (mounted) {
+      try {
+        final PermissionStatus permission = await Permission.locationWhenInUse.request();
+        if (permission == PermissionStatus.granted) {
+          bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+          if (serviceEnabled) {
+            final Position position = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.low,
+            );
+            final GoogleMapController controller = await _mapController.future;
+            if (mounted) {
+              setState(() {
+                _isProgrammaticMove = true;
+                _isMapCenteredOnUser = true; // Reflecting that we are centering on a version of user location
+                _lastMapPosition = LatLng(position.latitude, position.longitude);
+              });
+              controller.animateCamera(CameraUpdate.newCameraPosition(
+                CameraPosition(
+                  target: LatLng(position.latitude, position.longitude),
+                  zoom: 6.0, // Country-level zoom
+                ),
+              ));
+            }
+          }
+        }
+      } catch (e) {
+        print('Error animating to initial country view: $e');
+        // If error, map stays at _kInitialNeutralView. _isMapCenteredOnUser remains false.
+      }
+    }
   }
 
   @override
@@ -36,14 +74,12 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
     super.dispose();
   }
 
-  Future<void> _goToCurrentUserLocation() async {
-    if (!_locationFeaturesEnabled) {
-      if (mounted) {
+  Future<void> _goToCurrentUserLocation() async { 
+    if (!_locationFeaturesEnabled && mounted) {
         setState(() {
-          _locationFeaturesEnabled = true;
+            _locationFeaturesEnabled = true;
         });
-        await Future.delayed(const Duration(milliseconds: 300));
-      }
+        await Future.delayed(const Duration(milliseconds: 100)); 
     }
 
     final PermissionStatus permission = await Permission.locationWhenInUse.request();
@@ -61,14 +97,14 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
         }
 
         final Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
+          desiredAccuracy: LocationAccuracy.high, 
         );
         final GoogleMapController controller = await _mapController.future;
 
         if (mounted) {
           setState(() {
-            _isProgrammaticMove = true; // Indicate that the upcoming move is programmatic
-            _isMapCenteredOnUser = true; // Set centered state immediately for icon change
+            _isProgrammaticMove = true;
+            _isMapCenteredOnUser = true;
             _lastMapPosition = LatLng(position.latitude, position.longitude);
           });
         }
@@ -76,35 +112,34 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
         controller.animateCamera(CameraUpdate.newCameraPosition(
           CameraPosition(
             target: LatLng(position.latitude, position.longitude),
-            zoom: 16.0,
+            zoom: 16.0, 
           ),
         ));
-        // Note: _isProgrammaticMove will be reset to false in _onCameraIdle
 
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error getting location: ${e.toString()}')),
           );
+          if (mounted && _isMapCenteredOnUser) {
+            setState((){
+              _isMapCenteredOnUser = false;
+            });
+          }
         }
       }
-    } else if (permission == PermissionStatus.denied) {
+    } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Location permission denied.')),
+          SnackBar(content: Text(permission == PermissionStatus.denied 
+              ? 'Location permission denied.'
+              : 'Location permission permanently denied. Please enable it in app settings.')),
         );
-      }
-    } else if (permission == PermissionStatus.permanentlyDenied) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Location permission permanently denied. Please enable it in app settings.'),
-            action: SnackBarAction(
-              label: 'Settings',
-              onPressed: openAppSettings,
-            ),
-          ),
-        );
+        if (mounted && _isMapCenteredOnUser) {
+          setState((){
+            _isMapCenteredOnUser = false;
+          });
+        }
       }
     }
   }
@@ -113,6 +148,10 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
     if (!_mapController.isCompleted) {
       _mapController.complete(controller);
     }
+    // Animate to country view after map is created and controller is available.
+    _animateToInitialCountryView();
+
+    // Enable other location features like blue dot and FAB after a slight delay
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         setState(() {
@@ -124,8 +163,7 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
 
   void _onCameraMove(CameraPosition position) {
     if (mounted) {
-      _lastMapPosition = position.target; // Always update the last known position
-      // If the move is not programmatic and the map was centered, un-center it.
+      _lastMapPosition = position.target;
       if (!_isProgrammaticMove && _isMapCenteredOnUser) {
         setState(() {
           _isMapCenteredOnUser = false;
@@ -137,7 +175,7 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
   void _onCameraIdle() {
     if (mounted && _isProgrammaticMove) {
       setState(() {
-        _isProgrammaticMove = false; // Programmatic move has finished
+        _isProgrammaticMove = false;
       });
     }
   }
@@ -165,6 +203,7 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // No more _isInitializingMap check; Scaffold is built immediately.
     return Scaffold(
       appBar: AppBar(
         title: const Text('Select Location'),
@@ -180,10 +219,10 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
         children: <Widget>[
           GoogleMap(
             mapType: MapType.normal,
-            initialCameraPosition: _kInitialNeutralView,
+            initialCameraPosition: _kInitialNeutralView, // Always start with neutral view
             onMapCreated: _onMapCreated,
             onCameraMove: _onCameraMove,
-            onCameraIdle: _onCameraIdle, // Added camera idle callback
+            onCameraIdle: _onCameraIdle,
             myLocationEnabled: _locationFeaturesEnabled,
             myLocationButtonEnabled: _locationFeaturesEnabled,
             zoomControlsEnabled: true,
@@ -235,7 +274,7 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
                 mini: true,
                 backgroundColor: Colors.blue,
                 tooltip: _isMapCenteredOnUser ? 'Location centered' : 'My Location',
-                onPressed: _goToCurrentUserLocation,
+                onPressed: _goToCurrentUserLocation, 
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
                   transitionBuilder: (Widget child, Animation<double> animation) {
