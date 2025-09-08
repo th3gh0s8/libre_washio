@@ -70,4 +70,5 @@ flutter:
   assets:
     - assets/images/logo_light.jpeg
     - assets/images/logo_light.png
+    - assets/images/logo_dark.png
     - assets/images/google_logo.png

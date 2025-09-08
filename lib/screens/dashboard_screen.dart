@@ -125,6 +125,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildLocationDisplayWidget(BuildContext context, String? currentAddress, VoidCallback onTap) {
+    final theme = Theme.of(context); // Get the current theme
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -133,21 +134,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
           borderRadius: BorderRadius.circular(8.0), 
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min, // This is key to keep the Row compact
+          mainAxisSize: MainAxisSize.min, 
           children: [
-            // Removed Expanded widget from here
             Text(
               currentAddress ?? "Set your location", 
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14.0, 
                 fontWeight: FontWeight.w500,
-                color: Colors.black, 
+                color: theme.colorScheme.onSurface, // Theme-aware text color
               ),
               overflow: TextOverflow.ellipsis, 
               maxLines: 1,
             ),
             const SizedBox(width: 4.0), 
-            const Icon(Icons.arrow_drop_down, color: Colors.black54, size: 20), 
+            Icon(
+              Icons.arrow_drop_down, 
+              color: theme.colorScheme.onSurface.withOpacity(0.7), // Theme-aware icon color
+              size: 20
+            ), 
           ],
         ),
       ),
@@ -161,7 +165,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: _buildLocationDisplayWidget(context, _selectedAddress, _navigateToMapAndGetAddress),
-        titleSpacing: 0, // Ensures the title widget starts from the far left
+        titleSpacing: 0, 
         automaticallyImplyLeading: false, 
       ),
       body: Padding( 

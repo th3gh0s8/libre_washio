@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:country_code_picker/country_code_picker.dart';
-import '../api.dart'; // Import your ApiService
+import 'package:provider/provider.dart';
+import '../api.dart'; 
+import '../theme_provider.dart'; 
 import 'verification_screen.dart';
-import 'dashboard_screen.dart'; // Import for AppShell
+import 'dashboard_screen.dart'; 
 
 class PhoneNumberRule {
   final int inputLength; 
@@ -59,17 +61,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     'IN': PhoneNumberRule(inputLength: 10, actualLength: 10, forbidLeadingZero: false), 
   };
 
-  // --- Test Account Credentials and Data ---
-  static const String _testCountryCode = "+94"; // Example: Sri Lanka
-  static const String _testPhoneNumber = "123456789"; // NEW: Example test number without leading zero
+  static const String _testCountryCode = "+94";
+  static const String _testPhoneNumber = "123456789";
   static final Map<String, dynamic> _testUserData = {
     'id': 'test_user_001',
     'name': 'Test User',
-    'phone': '+94123456789', // Updated to match the new test phone number
+    'phone': '+94123456789',
     'email': 'test@example.com',
-    // Add any other fields your AppShell/DashboardScreen expects
   };
-  // --- End Test Account --- 
 
   @override
   void initState() {
@@ -88,45 +87,28 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     if (!_formKey.currentState!.validate()) { 
       return;
     }
-
     String phoneInput = _phoneController.text.trim();
     String currentSelectedDialCode = _selectedCountryCode.startsWith('+') 
           ? _selectedCountryCode.replaceAll(' ', '') 
           : '+' + _selectedCountryCode.replaceAll(' ', '');
 
-    // --- Test Account Check ---
     if (currentSelectedDialCode == _testCountryCode && phoneInput == _testPhoneNumber) {
-      setState(() {
-        _isLoading = true;
-      });
-      // Simulate a small delay, then navigate with test data
+      setState(() => _isLoading = true);
       await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => AppShell(userData: _testUserData)),
-          (Route<dynamic> route) => false, // Remove all previous routes
+          (Route<dynamic> route) => false,
         );
       }
-      // No need to set _isLoading = false if we are navigating away permanently.
-      // However, if navigation could fail or be popped, then it's needed.
-      // For pushAndRemoveUntil, it's generally fine, but good practice to ensure it if there's any doubt.
-      if (mounted) { // Check mounted again in case of await
-          setState(() {
-            _isLoading = false;
-          });
-      }
-      return; // Exit if test account is used
+      if (mounted) setState(() => _isLoading = false);
+      return; 
     }
-    // --- End Test Account Check ---
 
-    setState(() {
-      _isLoading = true;
-    });
-
+    setState(() => _isLoading = true);
     try {
       final response = await ApiService.requestOtp(phoneInput, currentSelectedDialCode);
-
       if (mounted) {
         if (response['status'] == 'success') {
           Navigator.push(
@@ -144,15 +126,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         }
       }
     } catch (e) {
-      if (mounted) {
-        _showMessage('An error occurred: ${e.toString()}');
-      }
+      if (mounted) _showMessage('An error occurred: ${e.toString()}');
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -164,21 +140,23 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     }
   }
 
-  Widget buildMobileNumberField() {
+  Widget buildMobileNumberField(BuildContext context) { // Pass BuildContext
+    final theme = Theme.of(context);
+
     return Form(
       key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Mobile number',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onBackground),
           ),
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey),
+              border: Border.all(color: theme.dividerColor), // Theme-aware border
               borderRadius: BorderRadius.circular(5.0),
             ),
             child: Row(
@@ -198,33 +176,56 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   showCountryOnly: false,
                   showOnlyCountryWhenClosed: false,
                   alignLeft: false,
+                  textStyle: TextStyle(color: theme.colorScheme.onSurface), // For the displayed code
+                  dialogBackgroundColor: theme.dialogBackgroundColor,
+                  dialogTextStyle: TextStyle(color: theme.colorScheme.onSurface),
+                  searchDecoration: InputDecoration(
+                    hintText: 'Search country',
+                    hintStyle: TextStyle(color: theme.hintColor),
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: theme.dividerColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: theme.primaryColor),
+                    ),
+                    prefixIcon: Icon(Icons.search, color: theme.iconTheme.color), 
+                  ),
+                  searchStyle: TextStyle(color: theme.colorScheme.onSurface), // For text typed in search
+                  flagDecoration: BoxDecoration(borderRadius: BorderRadius.circular(2)),
+                  boxDecoration: BoxDecoration(color: Colors.transparent), // To prevent potential conflict
+                  // It seems the icon color for the dropdown arrow within CountryCodePicker
+                  // might need more direct styling or might be using an internal Icon widget.
+                  // If it doesn't change, this might be a limitation of the package's direct styling options.
+                  // We can try setting a general iconTheme for the picker if available,
+                  // or wrap it in a Theme widget if deeply needed.
+                  // For now, let's assume the text and background changes will be the most impactful.
                 ),
                 const SizedBox(width: 5),
                 Expanded(
                   child: TextFormField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
+                    style: TextStyle(color: theme.colorScheme.onSurface), // For typed phone number
                     inputFormatters: [
                       NoLeadingZeroFormatter(forbidLeadingZero: _currentPhoneRule.forbidLeadingZero),
                       LengthLimitingTextInputFormatter(_currentPhoneRule.inputLength),
                       FilteringTextInputFormatter.digitsOnly,
                     ],
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Mobile number',
+                      hintStyle: TextStyle(color: theme.hintColor),
                       border: InputBorder.none,
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your mobile number.';
                       }
-                      // If it's the test number for the test country, consider it valid immediately.
                       String currentSelectedDialCodeForValidation = _selectedCountryCode.startsWith('+') 
                           ? _selectedCountryCode.replaceAll(' ', '') 
                           : '+' + _selectedCountryCode.replaceAll(' ', '');
                       if (currentSelectedDialCodeForValidation == _testCountryCode && value.trim() == _testPhoneNumber) {
-                        return null; // Test number is valid
+                        return null; 
                       }
-                      // Regular validation for non-test numbers
                       if (value.trim().length != _currentPhoneRule.actualLength) {
                         return 'Enter a valid ${_currentPhoneRule.actualLength}-digit number for $_selectedCountryName.';
                       }
@@ -242,6 +243,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final String logoAssetPath = themeProvider.isDarkMode 
+        ? 'assets/images/logo_dark.png' 
+        : 'assets/images/logo_light.png';
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: SingleChildScrollView(
@@ -251,14 +257,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 20),
-              Image.asset('assets/images/logo_light.png', height: 280),
+              Image.asset(logoAssetPath, height: 280),
               const SizedBox(height: 20),
               const Text(
                 'Get started with Washio',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
-              buildMobileNumberField(),
+              buildMobileNumberField(context), // Pass context here
               const SizedBox(height: 20),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
