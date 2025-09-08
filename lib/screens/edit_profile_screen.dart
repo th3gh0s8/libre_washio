@@ -130,7 +130,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Account'), // Changed title for consistency
+        // title: const Text('Account'), // Title removed
+        title: const SizedBox.shrink(),
         automaticallyImplyLeading: false, // AppShell handles navigation
         actions: [
           IconButton(

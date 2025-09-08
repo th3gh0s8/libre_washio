@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart'; // For LatLng
 import 'edit_profile_screen.dart'; 
-import 'map_selection_screen.dart'; // Import the new map screen
+import 'map_selection_screen.dart'; 
 
 // --- AppShell Widget (Manages Bottom Navigation) ---
 class AppShell extends StatefulWidget {
@@ -108,22 +107,51 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> { 
-  LatLng? _selectedCoordinates;
-  String _selectedLocationDisplay = "Not Set";
+  String? _selectedAddress; 
 
-  Future<void> _changeLocation() async {
+  Future<void> _navigateToMapAndGetAddress() async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const MapSelectionScreen()),
     );
 
-    if (result != null && result is LatLng) {
+    if (result != null && result is String) {
       setState(() {
-        _selectedCoordinates = result;
-        // For now, just display LatLng. In a real app, do reverse geocoding here.
-        _selectedLocationDisplay = "Lat: ${result.latitude.toStringAsFixed(4)}, Lng: ${result.longitude.toStringAsFixed(4)}";
+        _selectedAddress = result;
       });
+    } else {
+      print("Map selection returned: $result");
     }
+  }
+
+  Widget _buildLocationDisplayWidget(BuildContext context, String? currentAddress, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0), 
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8.0), 
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min, // This is key to keep the Row compact
+          children: [
+            // Removed Expanded widget from here
+            Text(
+              currentAddress ?? "Set your location", 
+              style: const TextStyle(
+                fontSize: 14.0, 
+                fontWeight: FontWeight.w500,
+                color: Colors.black, 
+              ),
+              overflow: TextOverflow.ellipsis, 
+              maxLines: 1,
+            ),
+            const SizedBox(width: 4.0), 
+            const Icon(Icons.arrow_drop_down, color: Colors.black54, size: 20), 
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -132,38 +160,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home'), 
+        title: _buildLocationDisplayWidget(context, _selectedAddress, _navigateToMapAndGetAddress),
+        titleSpacing: 0, // Ensures the title widget starts from the far left
         automaticallyImplyLeading: false, 
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Welcome, $userName!',
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'This is your Washio Dashboard.',
-                style: TextStyle(fontSize: 18),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 30),
-              Text(
-                'Current Location: $_selectedLocationDisplay',
-                style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: _changeLocation,
-                child: const Text('Change Location'),
-              ),
-            ],
-          ),
+      body: Padding( 
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start, 
+          crossAxisAlignment: CrossAxisAlignment.start, 
+          children: [
+            const SizedBox(height: 16), 
+            Text(
+              'Welcome, $userName!',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'This is your Washio Dashboard.',
+              style: TextStyle(fontSize: 18),
+            ),
+          ],
         ),
       ),
     );
@@ -178,7 +195,7 @@ class BrowseScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Browse'),
+        title: const SizedBox.shrink(),
         automaticallyImplyLeading: false,
       ),
       body: const Center(
@@ -195,7 +212,7 @@ class OrdersScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Orders'),
+        title: const SizedBox.shrink(),
         automaticallyImplyLeading: false,
       ),
       body: const Center(
