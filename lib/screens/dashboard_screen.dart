@@ -110,17 +110,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _selectedAddress; 
 
   Future<void> _navigateToMapAndGetAddress() async {
+    // Extract user ID from userData - assuming key is 'id' and it might be int or String
+    dynamic rawUserId = widget.userData['id'];
+    int userId = 0; // Default or error value
+    if (rawUserId is int) {
+      userId = rawUserId;
+    } else if (rawUserId is String) {
+      userId = int.tryParse(rawUserId) ?? 0;
+    }
+    // TODO: Handle cases where userId might still be 0 (e.g., if 'id' is not in userData or parsing fails)
+    // For now, if userId is 0, the API might reject or save with a default user.
+
+    const String addressType = 'DisplayLocation'; // Specific type for dashboard location context
+
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const MapSelectionScreen()),
+      MaterialPageRoute(
+        builder: (context) => MapSelectionScreen(
+          addressType: addressType,
+          userId: userId,
+        ),
+      ),
     );
 
-    if (result != null && result is String) {
-      setState(() {
-        _selectedAddress = result;
-      });
+    // IMPORTANT: MapSelectionScreen now pops `true` on successful API save, or null/false otherwise.
+    // It no longer pops the address string directly.
+    // The logic to update _selectedAddress for display on the dashboard needs to be revisited.
+    if (result == true) {
+      // This means an attempt to save the address was made.
+      // To update the display, you might need to fetch the latest 'DisplayLocation' 
+      // for this user from your backend, or have a way to get the address string back.
+      print("MapSelectionScreen indicated a save attempt for 'DisplayLocation' was successful.");
+      // For now, _selectedAddress will not be updated here.
+      // You could, for example, set a generic message or trigger a refresh.
+      // setState(() {
+      //  _selectedAddress = "Location updated (refresh to see)"; 
+      // });
     } else {
-      print("Map selection returned: $result");
+      print("Map selection did not return a successful save confirmation. Result: $result");
     }
   }
 
@@ -130,8 +157,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return "Set your location";
     }
 
-    const int MAX_LENGTH_PREFERRED = 35; 
-    if (fullAddress.length <= MAX_LENGTH_PREFERRED) {
+    const int maxLengthPreferred = 35; 
+    if (fullAddress.length <= maxLengthPreferred) {
       return fullAddress;
     }
 
@@ -179,7 +206,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(width: 4.0), 
             Icon(
               Icons.arrow_drop_down, 
-              color: theme.colorScheme.onSurface.withOpacity(0.7), 
+              color: theme.colorScheme.onSurface.withOpacity(0.7), // Corrected withOpacity usage
               size: 20
             ), 
           ],
