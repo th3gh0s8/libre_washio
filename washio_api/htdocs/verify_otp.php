@@ -3,15 +3,13 @@
 @error_reporting(0);
 
 header('Content-Type: application/json');
-include 'db.php'; // Your database connection using $host = "localhost";
+include 'db.php'; // Your database connection
 
-// CRITICAL: Check database connection immediately after include
 if (!isset($conn) || $conn->connect_error) {
     echo json_encode(['status' => 'error', 'message' => 'Database connection failed in verify_otp: ' . (isset($conn) ? $conn->connect_error : 'Unknown error')]);
     exit;
 }
 
-// Expect separate country_code and local_phone_number
 $posted_country_code = $_POST['country_code'] ?? null;
 $posted_local_phone = $_POST['local_phone_number'] ?? null;
 $otp_entered = $_POST['otp'] ?? null;
@@ -22,21 +20,19 @@ if (!$posted_country_code || !$posted_local_phone || !$otp_entered) {
     exit;
 }
 
-// Reconstruct full phone number for OTP lookup in web_codes table,
-// as request_otp.php stores it concatenated.
-$full_phone_for_otp_lookup = $posted_country_code . $posted_local_phone;
+// Removed: $full_phone_for_otp_lookup = $posted_country_code . $posted_local_phone;
 
-// Start transaction
 $conn->begin_transaction();
 
 try {
     // Check if the OTP is valid, active, and for the correct purpose
-    $stmt_check = $conn->prepare("SELECT id, userTb FROM web_codes WHERE mobile_number = ? AND codes = ? AND isActive = 1 AND code_from = ? AND rDateTime >= NOW() - INTERVAL 10 MINUTE");
+    // Queries web_codes using separate country_code and mobile_number (local part)
+    $stmt_check = $conn->prepare("SELECT id, userTb FROM web_codes WHERE country_code = ? AND mobile_number = ? AND codes = ? AND isActive = 1 AND code_from = ? AND rDateTime >= NOW() - INTERVAL 10 MINUTE");
     if (!$stmt_check) {
         throw new Exception("OTP check statement preparation failed: " . $conn->error);
     }
-    // Use the reconstructed full phone number for this lookup
-    $stmt_check->bind_param("sss", $full_phone_for_otp_lookup, $otp_entered, $code_from);
+    // Bind parameters: country_code, local_phone, otp_entered, code_from
+    $stmt_check->bind_param("ssss", $posted_country_code, $posted_local_phone, $otp_entered, $code_from);
     
     if (!$stmt_check->execute()) {
         throw new Exception("Failed to execute OTP check: " . $stmt_check->error);
@@ -61,16 +57,14 @@ try {
         $stmt_deactivate->close();
 
         // At this point, OTP is verified. Now check if user exists in the 'users' table.
-        // Query users table using separate country_code and phone (local part)
         $user_exists = false;
         $user_data = null;
         
-        // IMPORTANT: This assumes your users.country_code stores values like '+94' 
-        // and users.phone stores values like '771234567' (no leading national zero)
         $stmt_find_user = $conn->prepare("SELECT id, name, email, phone, country_code, profile_image, address, wallet_balance, role, is_active FROM users WHERE country_code = ? AND phone = ?");
         if (!$stmt_find_user) {
             throw new Exception("User find statement preparation failed: " . $conn->error);
         }
+        // Uses $posted_country_code and $posted_local_phone which align with users table structure
         $stmt_find_user->bind_param("ss", $posted_country_code, $posted_local_phone);
         
         if ($stmt_find_user->execute()) {
@@ -99,7 +93,8 @@ try {
 
 } catch (Exception $e) {
     $conn->rollback();
-    echo json_encode(['status' => 'error', 'message' => 'Server Error: ' . $e->getMessage()]);
+    error_log("Verify OTP Error: " . $e->getMessage() . " for CC: $posted_country_code, Phone: $posted_local_phone, OTP: $otp_entered");
+    echo json_encode(['status' => 'error', 'message' => 'Server Error during OTP verification. Please try again later.']);
 }
 
 $conn->close();
