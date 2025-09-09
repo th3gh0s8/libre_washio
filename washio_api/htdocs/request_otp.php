@@ -20,12 +20,30 @@ if (!$local_phone_from_post || !$country_code_from_post) {
 
 $otp = rand(100000, 999999);
 $code_from = 'login_otp'; // Ensure this matches usage in verify_otp.php
+$user_id_for_otp = null; // Initialize user_id for OTP record
 
 $conn->begin_transaction();
 
 try {
-    // Deactivate old OTPs for this number and purpose
-    // Uses the separate country_code and mobile_number (local part) columns from web_codes
+    // 1. Find User ID from users table (if user exists)
+    $stmt_find_user = $conn->prepare("SELECT id FROM users WHERE country_code = ? AND phone = ?");
+    if (!$stmt_find_user) {
+        throw new Exception("User find statement preparation failed: " . $conn->error);
+    }
+    $stmt_find_user->bind_param("ss", $country_code_from_post, $local_phone_from_post);
+    if ($stmt_find_user->execute()) {
+        $result_user = $stmt_find_user->get_result();
+        if ($user_row = $result_user->fetch_assoc()) {
+            $user_id_for_otp = $user_row['id'];
+        }
+    } else {
+        // Log this error but don't necessarily stop OTP generation, 
+        // as OTP might be for a new user registration flow if userTb is nullable.
+        error_log("Failed to execute user find query during OTP request: " . $stmt_find_user->error);
+    }
+    $stmt_find_user->close();
+
+    // 2. Deactivate old OTPs for this number and purpose
     $stmt_deactivate = $conn->prepare("UPDATE web_codes SET isActive = 0 WHERE country_code = ? AND mobile_number = ? AND code_from = ?");
     if (!$stmt_deactivate) {
         throw new Exception("Deactivation statement preparation failed: " . $conn->error);
@@ -36,18 +54,19 @@ try {
     }
     $stmt_deactivate->close();
 
-    // Insert the new OTP using separate country_code and mobile_number (local part) columns
-    $stmt_insert = $conn->prepare("INSERT INTO web_codes (country_code, mobile_number, codes, isActive, rDateTime, code_from) VALUES (?, ?, ?, 1, NOW(), ?)");
+    // 3. Insert the new OTP, including userTb (which can be NULL if user not found and column is nullable)
+    $stmt_insert = $conn->prepare("INSERT INTO web_codes (country_code, mobile_number, codes, userTb, isActive, rDateTime, code_from) VALUES (?, ?, ?, ?, 1, NOW(), ?)");
     if (!$stmt_insert) {
         throw new Exception("Insertion statement preparation failed: " . $conn->error);
     }
     $otp_str = strval($otp);
-    $stmt_insert->bind_param("ssss", $country_code_from_post, $local_phone_from_post, $otp_str, $code_from); 
+    // Note the types: s (country_code), s (mobile_number/local_phone), s (codes/otp), i (userTb/user_id), s (code_from)
+    // If user_id_for_otp is null, binding with 'i' works for nullable integer columns in MySQL.
+    $stmt_insert->bind_param("sssis", $country_code_from_post, $local_phone_from_post, $otp_str, $user_id_for_otp, $code_from); 
     
     if ($stmt_insert->execute()) {
         $conn->commit();
-        // In a real app, you would also trigger an SMS to $country_code_from_post . $local_phone_from_post with $otp here
-        echo json_encode(['status' => 'success', 'message' => 'OTP generated successfully. OTP: ' . $otp]); // For testing, returning OTP
+        echo json_encode(['status' => 'success', 'message' => 'OTP generated successfully. OTP: ' . $otp]); // For testing
     } else {
         throw new Exception("Failed to store OTP: " . $stmt_insert->error);
     }
