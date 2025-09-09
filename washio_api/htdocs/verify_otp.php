@@ -3,40 +3,39 @@
 @error_reporting(0);
 
 header('Content-Type: application/json');
-include 'db.php'; // Your database connection using $host = "localhost";
+include 'db.php'; // Your database connection
 
-// CRITICAL: Check database connection immediately after include
 if (!isset($conn) || $conn->connect_error) {
     echo json_encode(['status' => 'error', 'message' => 'Database connection failed in verify_otp: ' . (isset($conn) ? $conn->connect_error : 'Unknown error')]);
     exit;
 }
 
-// Expect separate country_code and local_phone_number
 $posted_country_code = $_POST['country_code'] ?? null;
 $posted_local_phone = $_POST['local_phone_number'] ?? null;
 $otp_entered = $_POST['otp'] ?? null;
-$code_from = 'login_otp'; // Ensure this matches what was used in request_otp.php
+$posted_otp_purpose = $_POST['otp_purpose'] ?? null; // Expect 'login' or 'register' from client
 
-if (!$posted_country_code || !$posted_local_phone || !$otp_entered) {
-    echo json_encode(['status' => 'error', 'message' => 'Country code, phone number, and OTP are required.']);
+if (!$posted_country_code || !$posted_local_phone || !$otp_entered || !$posted_otp_purpose) {
+    echo json_encode(['status' => 'error', 'message' => 'Country code, phone number, OTP, and OTP purpose are required.']);
     exit;
 }
 
-// Reconstruct full phone number for OTP lookup in web_codes table,
-// as request_otp.php stores it concatenated.
-$full_phone_for_otp_lookup = $posted_country_code . $posted_local_phone;
+// Validate otp_purpose to be one of the expected values
+if ($posted_otp_purpose !== 'login' && $posted_otp_purpose !== 'register') {
+    echo json_encode(['status' => 'error', 'message' => 'Invalid OTP purpose specified.']);
+    exit;
+}
 
-// Start transaction
 $conn->begin_transaction();
 
 try {
     // Check if the OTP is valid, active, and for the correct purpose
-    $stmt_check = $conn->prepare("SELECT id, userTb FROM web_codes WHERE mobile_number = ? AND codes = ? AND isActive = 1 AND code_from = ? AND rDateTime >= NOW() - INTERVAL 10 MINUTE");
+    $stmt_check = $conn->prepare("SELECT id, userTb FROM web_codes WHERE country_code = ? AND mobile_number = ? AND codes = ? AND isActive = 1 AND code_from = ? AND rDateTime >= NOW() - INTERVAL 10 MINUTE");
     if (!$stmt_check) {
         throw new Exception("OTP check statement preparation failed: " . $conn->error);
     }
-    // Use the reconstructed full phone number for this lookup
-    $stmt_check->bind_param("sss", $full_phone_for_otp_lookup, $otp_entered, $code_from);
+    // Bind parameters: country_code, local_phone, otp_entered, posted_otp_purpose
+    $stmt_check->bind_param("ssss", $posted_country_code, $posted_local_phone, $otp_entered, $posted_otp_purpose);
     
     if (!$stmt_check->execute()) {
         throw new Exception("Failed to execute OTP check: " . $stmt_check->error);
@@ -60,13 +59,12 @@ try {
         }
         $stmt_deactivate->close();
 
-        // At this point, OTP is verified. Now check if user exists in the 'users' table.
-        // Query users table using separate country_code and phone (local part)
         $user_exists = false;
         $user_data = null;
         
-        // IMPORTANT: This assumes your users.country_code stores values like '+94' 
-        // and users.phone stores values like '771234567' (no leading national zero)
+        // If the OTP was for login, userTb should exist (unless an edge case). 
+        // If for registration, userTb might be null if OTP generated before user record created.
+        // The user check below is crucial for both flows.
         $stmt_find_user = $conn->prepare("SELECT id, name, email, phone, country_code, profile_image, address, wallet_balance, role, is_active FROM users WHERE country_code = ? AND phone = ?");
         if (!$stmt_find_user) {
             throw new Exception("User find statement preparation failed: " . $conn->error);
@@ -84,22 +82,28 @@ try {
         }
         $stmt_find_user->close();
         
+        // If the purpose was 'register' and user doesn't exist yet, this is where you'd typically guide them to the registration form.
+        // If purpose was 'login' and user doesn't exist, that's an anomaly.
+        // The current response structure handles returning user_exists and user_data.
+
         $conn->commit();
         echo json_encode([
             'status' => 'success', 
             'message' => 'OTP verified successfully.',
             'user_exists' => $user_exists,
-            'user_data' => $user_data 
+            'user_data' => $user_data,
+            'otp_purpose_verified' => $posted_otp_purpose // Good to confirm back what was verified
         ]);
 
     } else {
         $conn->rollback();
-        echo json_encode(['status' => 'error', 'message' => 'Invalid or expired OTP. Please try again.']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid or expired OTP. Please check the OTP and try again.']);
     }
 
 } catch (Exception $e) {
     $conn->rollback();
-    echo json_encode(['status' => 'error', 'message' => 'Server Error: ' . $e->getMessage()]);
+    error_log("Verify OTP Error: " . $e->getMessage() . " for CC: $posted_country_code, Phone: $posted_local_phone, OTP: $otp_entered, Purpose: $posted_otp_purpose");
+    echo json_encode(['status' => 'error', 'message' => 'Server Error during OTP verification. Please try again later.']);
 }
 
 $conn->close();

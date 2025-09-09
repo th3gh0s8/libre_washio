@@ -24,6 +24,8 @@ class ApiService {
     }
   }
 
+  // requestOtp now returns a response that includes 'otp_purpose' (e.g., 'login' or 'register')
+  // The calling code will need to extract this.
   static Future<Map<String, dynamic>> requestOtp(String phoneNumber, String countryCode) async {
     final url = Uri.parse('${baseUrl}request_otp.php');
     try {
@@ -37,7 +39,7 @@ class ApiService {
       );
       if (response.statusCode == 200) {
         final decodedResponse = jsonDecode(response.body) as Map<String, dynamic>;
-        return decodedResponse;
+        return decodedResponse; // Contains 'status', 'message', 'otp_purpose', 'otp' (for testing)
       } else {
         throw Exception('Failed to request OTP. Status code: ${response.statusCode}');
       }
@@ -46,7 +48,8 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> verifyOtp(String countryCode, String localPhoneNumber, String otp) async {
+  // verifyOtp now requires otpPurpose and sends it to the PHP script
+  static Future<Map<String, dynamic>> verifyOtp(String countryCode, String localPhoneNumber, String otp, String otpPurpose) async {
     final url = Uri.parse('${baseUrl}verify_otp.php');
     try {
       final response = await http.post(
@@ -56,6 +59,7 @@ class ApiService {
           'country_code': countryCode,       // e.g., "+94"
           'local_phone_number': localPhoneNumber, // e.g., "771234567"
           'otp': otp,
+          'otp_purpose': otpPurpose, // <<< NEW: Added otp_purpose to the request body
         },
       );
       if (response.statusCode == 200) {
