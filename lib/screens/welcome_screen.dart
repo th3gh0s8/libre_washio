@@ -111,6 +111,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       final response = await ApiService.requestOtp(phoneInput, currentSelectedDialCode);
       if (mounted) {
         if (response['status'] == 'success') {
+          // <<< NEW: Extract otp_purpose from the response
+          String otpPurpose = response['otp_purpose'] as String? ?? 'login'; // Default to 'login' if not present
+
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -118,6 +121,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 phoneNumber: phoneInput,
                 countryCode: currentSelectedDialCode,
                 countryName: _selectedCountryName,
+                otpPurpose: otpPurpose, // <<< NEW: Pass otpPurpose here
               ),
             ),
           );
@@ -193,12 +197,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   searchStyle: TextStyle(color: theme.colorScheme.onSurface), // For text typed in search
                   flagDecoration: BoxDecoration(borderRadius: BorderRadius.circular(2)),
                   boxDecoration: BoxDecoration(color: Colors.transparent), // To prevent potential conflict
-                  // It seems the icon color for the dropdown arrow within CountryCodePicker
-                  // might need more direct styling or might be using an internal Icon widget.
-                  // If it doesn't change, this might be a limitation of the package's direct styling options.
-                  // We can try setting a general iconTheme for the picker if available,
-                  // or wrap it in a Theme widget if deeply needed.
-                  // For now, let's assume the text and background changes will be the most impactful.
                 ),
                 const SizedBox(width: 5),
                 Expanded(
