@@ -4,7 +4,8 @@ import '../theme_provider.dart';
 import '../api.dart'; 
 import './actual_edit_profile_form_screen.dart'; 
 import './about_screen.dart'; 
-import './welcome_screen.dart'; // <<< NEW IMPORT for WelcomeScreen
+import './welcome_screen.dart'; 
+import './saved_addresses_screen.dart'; // <<< NEW IMPORT
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -71,19 +72,38 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       MaterialPageRoute(builder: (context) => const AboutScreen()), 
     );
   }
+
+  void _navigateToSavedAddressesScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SavedAddressesScreen()), // <<< MODIFIED
+    );
+  }
   
   void _handleLogout() {
-    // Navigate to WelcomeScreen and remove all routes behind it.
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const WelcomeScreen()), 
-      (Route<dynamic> route) => false, // This predicate ensures all previous routes are removed.
+      (Route<dynamic> route) => false, 
     );
   }
 
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 8.0),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final theme = Theme.of(context); 
 
     return Scaffold(
       appBar: AppBar(
@@ -101,10 +121,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ),
       body: ListView(
         children: <Widget>[
-          // User Info Header
           Container(
             padding: const EdgeInsets.all(20.0),
-            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+            color: theme.colorScheme.primaryContainer.withOpacity(0.3),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -116,12 +135,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: 12),
                 Text(
                   _displayName,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   _displayEmail,
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  style: theme.textTheme.bodyMedium,
                 ),
               ],
             ),
@@ -143,6 +162,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SnackBar(content: Text('Change Password screen would open here.')),
               );
             },
+          ),
+          ListTile( 
+            leading: const Icon(Icons.location_on_outlined), 
+            title: const Text('Saved Addresses'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: _navigateToSavedAddressesScreen, 
           ),
 
           _buildSectionTitle(context, "App Settings"),
@@ -188,25 +213,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           const Divider(height: 32, thickness: 1),
 
           ListTile(
-            leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
-            title: Text('Logout', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            leading: Icon(Icons.logout, color: theme.colorScheme.error),
+            title: Text('Logout', style: TextStyle(color: theme.colorScheme.error)),
             onTap: _handleLogout,
           ),
           const SizedBox(height: 20),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 8.0),
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.primary,
-        ),
       ),
     );
   }
