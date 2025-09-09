@@ -124,8 +124,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  // NEW Helper function to shorten the address
+  String _getShortenedAddress(String? fullAddress) {
+    if (fullAddress == null || fullAddress.isEmpty) {
+      return "Set your location";
+    }
+
+    const int MAX_LENGTH_PREFERRED = 35; 
+    if (fullAddress.length <= MAX_LENGTH_PREFERRED) {
+      return fullAddress;
+    }
+
+    List<String> parts = fullAddress.split(',');
+    
+    if (parts.length >= 2) {
+      String shortened = '${parts[0].trim()}, ${parts[1].trim()}';
+      return shortened;
+    }
+    
+    if (parts.isNotEmpty) {
+      return parts[0].trim();
+    }
+    
+    return fullAddress; 
+  }
+
   Widget _buildLocationDisplayWidget(BuildContext context, String? currentAddress, VoidCallback onTap) {
-    final theme = Theme.of(context); // Get the current theme
+    final theme = Theme.of(context);
+    String displayAddress = _getShortenedAddress(currentAddress);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -136,20 +163,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min, 
           children: [
-            Text(
-              currentAddress ?? "Set your location", 
-              style: TextStyle(
-                fontSize: 14.0, 
-                fontWeight: FontWeight.w500,
-                color: theme.colorScheme.onSurface, // Theme-aware text color
+            Flexible(
+              child: Text(
+                displayAddress, 
+                style: TextStyle(
+                  fontSize: 14.0, 
+                  fontWeight: FontWeight.w500,
+                  color: theme.colorScheme.onSurface, 
+                ),
+                overflow: TextOverflow.ellipsis, 
+                maxLines: 1,
+                softWrap: false, // Added softWrap
               ),
-              overflow: TextOverflow.ellipsis, 
-              maxLines: 1,
             ),
             const SizedBox(width: 4.0), 
             Icon(
               Icons.arrow_drop_down, 
-              color: theme.colorScheme.onSurface.withOpacity(0.7), // Theme-aware icon color
+              color: theme.colorScheme.onSurface.withOpacity(0.7), 
               size: 20
             ), 
           ],
