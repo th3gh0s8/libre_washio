@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // Import Provider
-import '../theme_provider.dart'; // Assuming theme_provider.dart is in lib/
+import 'package:provider/provider.dart';
+import '../theme_provider.dart';
 import '../api.dart'; 
+import './actual_edit_profile_form_screen.dart'; 
+import './about_screen.dart'; 
+import './welcome_screen.dart'; // <<< NEW IMPORT for WelcomeScreen
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> userData;
-  final Function(Map<String, dynamic> updatedUserData)? onUserDataUpdated; // Callback
+  final Function(Map<String, dynamic> updatedUserData)? onUserDataUpdated;
 
   const EditProfileScreen({
     Key? key, 
     required this.userData,
-    this.onUserDataUpdated, // Add to constructor
+    this.onUserDataUpdated,
   }) : super(key: key);
 
   @override
@@ -18,111 +21,65 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  final _formKey = GlobalKey<FormState>();
-  late TextEditingController _nameController;
-  late TextEditingController _emailController;
-  late TextEditingController _addressController;
-  String _displayPhone = ""; 
-  int? _userId;
-
-  bool _isLoading = false;
+  String _displayName = "User";
+  String _displayEmail = "";
 
   @override
   void initState() {
     super.initState();
-    _updateControllersFromWidgetData();
+    _updateDisplayDataFromWidgetData();
   }
 
   @override
   void didUpdateWidget(covariant EditProfileScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // If the userData passed to the widget changes, update the controllers
     if (widget.userData != oldWidget.userData) {
-      _updateControllersFromWidgetData();
+      _updateDisplayDataFromWidgetData();
     }
   }
 
-  void _updateControllersFromWidgetData() {
-    _userId = widget.userData['id'] as int?;
-    _nameController = TextEditingController(text: widget.userData['name']?.toString() ?? '');
-    _emailController = TextEditingController(text: widget.userData['email']?.toString() ?? '');
-    _addressController = TextEditingController(text: widget.userData['address']?.toString() ?? '');
-    String phone = widget.userData['phone']?.toString() ?? ''; 
-    _displayPhone = phone; 
-    // If a field was being edited and widget rebuilds with same data, selection might be lost.
-    // Storing and restoring selection is an advanced topic if this becomes an issue.
-  }
-
-
-  Future<void> _saveChanges() async {
-    if (_formKey.currentState!.validate()) {
-      if (_userId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error: User ID is missing. Cannot update.')),
-        );
-        return;
-      }
-
-      setState(() {
-        _isLoading = true;
-      });
-
-      try {
-        final response = await ApiService.updateUserDetails(
-          userId: _userId!, 
-          name: _nameController.text,
-          email: _emailController.text,
-          address: _addressController.text.isNotEmpty ? _addressController.text : null,
-        );
-
-        if (mounted) {
-          if (response['status'] == 'success') {
-            Map<String, dynamic> updatedUserData = response['user_data'] ?? widget.userData;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Profile updated successfully!')),
-            );
-            
-            // Call the callback if provided
-            if (widget.onUserDataUpdated != null) {
-              widget.onUserDataUpdated!(updatedUserData);
-            }
-            
-            // Pop if this screen was pushed onto a navigator stack
-            // If it's directly in AppShell, pop might not be the intended behavior
-            // but AppShell will handle its own state update via the callback.
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context, updatedUserData); 
-            }
-
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(response['message'] ?? 'Failed to update profile.')),
-            );
-          }
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('An error occurred: ${e.toString()}')),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      }
-    }
+  void _updateDisplayDataFromWidgetData() {
+    _displayName = widget.userData['name']?.toString() ?? 'User';
+    _displayEmail = widget.userData['email']?.toString() ?? 'No email';
+    setState(() {}); 
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _addressController.dispose();
     super.dispose();
   }
+
+  Future<void> _navigateToActualEditProfile() async { 
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ActualEditProfileFormScreen(
+          initialUserData: widget.userData,
+          onUserDataUpdated: widget.onUserDataUpdated, 
+        ),
+      ),
+    );
+
+    if (result != null && result is Map<String, dynamic>) {
+      _updateDisplayDataFromWidgetData(); 
+    }
+  }
+
+  void _navigateToAboutScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AboutScreen()), 
+    );
+  }
+  
+  void _handleLogout() {
+    // Navigate to WelcomeScreen and remove all routes behind it.
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const WelcomeScreen()), 
+      (Route<dynamic> route) => false, // This predicate ensures all previous routes are removed.
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -130,9 +87,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        // title: const Text('Account'), // Title removed
-        title: const SizedBox.shrink(),
-        automaticallyImplyLeading: false, // AppShell handles navigation
+        title: const Text('Account'), 
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: Icon(themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode),
@@ -143,88 +99,113 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              if (_displayPhone.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 20.0),
-                  child: Text(
-                    'Phone: $_displayPhone',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
-                    textAlign: TextAlign.center,
-                  ),
+      body: ListView(
+        children: <Widget>[
+          // User Info Header
+          Container(
+            padding: const EdgeInsets.all(20.0),
+            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.grey,
+                  child: Icon(Icons.person, size: 40, color: Colors.white),
                 ),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Full Name',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
+                const SizedBox(height: 12),
+                Text(
+                  _displayName,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter your full name';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email Address',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
+                const SizedBox(height: 4),
+                Text(
+                  _displayEmail,
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter your email address';
-                  }
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                    return 'Please enter a valid email address';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _addressController,
-                decoration: const InputDecoration(
-                  labelText: 'Address',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.home),
-                  hintText: 'Enter your address (optional)',
-                ),
-              ),
-              const SizedBox(height: 30),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.white,               
-                  backgroundColor: Colors.blue,                
-                  minimumSize: const Size(double.infinity, 50), 
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10), 
-                  ),
-                  elevation: 5,                                
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 10), 
-                ),
-                onPressed: _isLoading ? null : _saveChanges,
-                child: _isLoading
-                    ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white))
-                    : const Text('Save Changes'), 
-              ),
-            ],
+              ],
+            ),
           ),
+          
+          _buildSectionTitle(context, "Profile Management"),
+          ListTile(
+            leading: const Icon(Icons.edit_outlined),
+            title: const Text('Edit Profile'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: _navigateToActualEditProfile,
+          ),
+          ListTile(
+            leading: const Icon(Icons.lock_outline),
+            title: const Text('Change Password'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+               ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Change Password screen would open here.')),
+              );
+            },
+          ),
+
+          _buildSectionTitle(context, "App Settings"),
+          ListTile(
+            leading: const Icon(Icons.notifications_outlined),
+            title: const Text('Notifications'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+               ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Notification settings would open here.')),
+              );
+            },
+          ),
+
+          _buildSectionTitle(context, "Support & Legal"),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: const Text('About Washio'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: _navigateToAboutScreen, 
+          ),
+          ListTile(
+            leading: const Icon(Icons.privacy_tip_outlined),
+            title: const Text('Privacy Policy'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Privacy Policy would open here.')),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.description_outlined),
+            title: const Text('Terms of Service'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+               ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Terms of Service would open here.')),
+              );
+            },
+          ),
+          
+          const Divider(height: 32, thickness: 1),
+
+          ListTile(
+            leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
+            title: Text('Logout', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            onTap: _handleLogout,
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 8.0),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.primary,
         ),
       ),
     );
