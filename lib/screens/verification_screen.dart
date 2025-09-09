@@ -8,14 +8,14 @@ class VerificationScreen extends StatefulWidget {
   final String phoneNumber; 
   final String countryCode; 
   final String countryName;
-  final String otpPurpose; // <<< NEW: Added otpPurpose field
+  final String otpPurpose; 
 
   const VerificationScreen({
     Key? key,
     required this.phoneNumber,
     required this.countryCode,
     required this.countryName,
-    required this.otpPurpose, // <<< NEW: Added otpPurpose to constructor
+    required this.otpPurpose, 
   }) : super(key: key);
 
   @override
@@ -56,8 +56,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
     });
 
     try {
-      // Pass widget.otpPurpose to ApiService.verifyOtp
-      final response = await ApiService.verifyOtp(widget.countryCode, widget.phoneNumber, otp, widget.otpPurpose); // <<< MODIFIED
+      final response = await ApiService.verifyOtp(widget.countryCode, widget.phoneNumber, otp, widget.otpPurpose); 
 
       if (mounted) {
         if (response['status'] == 'success') {
@@ -65,22 +64,27 @@ class _VerificationScreenState extends State<VerificationScreen> {
           Map<String, dynamic>? userData = response['user_data'] as Map<String, dynamic>?;
 
           if (userExists && userData != null) {
-            // User exists, navigate to AppShell with user data and clear stack
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
-                builder: (context) => AppShell( // Navigate to AppShell
+                builder: (context) => AppShell( 
                   userData: userData, 
                 ),
               ),
-              (Route<dynamic> route) => false, // Clear all previous routes
+              (Route<dynamic> route) => false, 
             );
           } else if (userExists && userData == null) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('User exists but data is missing. Please try again.')),
             );
+            // Reset focus and clear fields on error too if needed, similar to wrong OTP
+            for (var controller in _codeControllers) {
+              controller.clear();
+            }
+            if (_focusNodes.isNotEmpty) {
+              FocusScope.of(context).requestFocus(_focusNodes[0]);
+            }
           } else {
-            // User does not exist, go to RegistrationScreen (this part remains the same)
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -95,6 +99,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(response['message'] ?? 'Invalid OTP. Please try again.')),
           );
+          // Clear fields and reset focus for incorrect OTP
+          for (var controller in _codeControllers) {
+            controller.clear();
+          }
+          if (_focusNodes.isNotEmpty) { 
+            FocusScope.of(context).requestFocus(_focusNodes[0]);
+          }
         }
       }
     } catch (e) {
@@ -102,6 +113,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('An error occurred: ${e.toString()}')),
         );
+        // Optionally, clear fields and reset focus on general error too
+        for (var controller in _codeControllers) {
+            controller.clear();
+        }
+        if (_focusNodes.isNotEmpty) {
+            FocusScope.of(context).requestFocus(_focusNodes[0]);
+        }
       }
     } finally {
       if (mounted) {
@@ -157,17 +175,17 @@ class _VerificationScreenState extends State<VerificationScreen> {
       _isLoading = true; 
     });
     try {
-      // Note: requestOtp now returns a map that includes 'otp_purpose'
-      // For resend, we are not directly using the new otp_purpose in this screen's state,
-      // as this screen was initialized with an otpPurpose. This might be a point of future refinement
-      // if the purpose can change dynamically upon resend.
       final Map<String, dynamic> newOtpResponse = await ApiService.requestOtp(widget.phoneNumber, widget.countryCode);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(newOtpResponse['message'] ?? 'A new OTP has been sent.')),
-        );
-         // Potentially, if otp_purpose changed upon resend, you might need to update widget.otpPurpose
-        // or inform the user. For now, this screen will continue to use the otpPurpose it was initialized with.
+        if (newOtpResponse['status'] == 'success') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('A new OTP has been sent to your phone number. Please check your messages.')), 
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(newOtpResponse['message'] ?? 'Failed to resend OTP. Please try again.')),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -196,7 +214,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Enter the 6-digit code sent to ${widget.countryCode}${widget.phoneNumber}. Purpose: ${widget.otpPurpose}', // Displaying otpPurpose for clarity
+              'Enter the 6-digit code sent to ${widget.countryCode}${widget.phoneNumber}. Purpose: ${widget.otpPurpose}', 
               style: const TextStyle(fontSize: 16),
               textAlign: TextAlign.center,
             ),
