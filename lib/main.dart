@@ -1,88 +1,128 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // 1. Import provider
-import 'theme_provider.dart';         // 2. Import your ThemeProvider (ensure this path is correct)
+import 'package:provider/provider.dart'; 
+import 'theme_provider.dart';         
 import 'screens/welcome_screen.dart';
-// If VerificationScreen here is different from lib/screens/verification_screen.dart, ensure consistent usage
-// import 'screens/verification_screen.dart'; // This would be the typical import
+// Ensure you are consistently using the VerificationScreen from lib/screens/
+// import 'screens/verification_screen.dart'; 
 
-void main() async { // 3. Make main async
-  WidgetsFlutterBinding.ensureInitialized(); // 4. Ensure bindings are initialized
+void main() async { 
+  WidgetsFlutterBinding.ensureInitialized(); 
   runApp(
-    ChangeNotifierProvider( // 5. Provide ThemeProvider
+    ChangeNotifierProvider( 
       create: (_) => ThemeProvider(),
-      child: MyApp(),
+      child: const MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  // Removed const from MyApp to allow hot reload with provider changes if needed,
-  // but can be const if child widgets handle all state.
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
-    // 6. Get ThemeProvider instance
     final themeProvider = Provider.of<ThemeProvider>(context);
+
+    final Color darkPrimaryColor = Colors.blue[300]!;
+    final Color darkSecondaryColor = Colors.lightBlueAccent[100]!;
 
     return MaterialApp(
       title: 'Washio',
-      // 7. Apply theme settings from ThemeProvider
       themeMode: themeProvider.themeMode,
-      theme: ThemeData( // Your Light Theme
-        primarySwatch: Colors.blue,
-        brightness: Brightness.light,
-        // Add other light theme specific properties here
-        // Example:
-        // scaffoldBackgroundColor: Colors.white,
-        // appBarTheme: AppBarTheme(backgroundColor: Colors.blue, foregroundColor: Colors.white),
+      theme: ThemeData( 
+        colorScheme: ColorScheme.fromSwatch(
+          primarySwatch: Colors.blue,
+          brightness: Brightness.light,
+        ),
       ),
-      darkTheme: ThemeData( // Your Dark Theme
-        primarySwatch: Colors.blue, // Or a different swatch for dark mode
-        brightness: Brightness.dark,
-        // Add other dark theme specific properties here
-        // Example:
-        // scaffoldBackgroundColor: Colors.grey[900],
-        // appBarTheme: AppBarTheme(backgroundColor: Colors.grey[850], foregroundColor: Colors.white),
-        // elevatedButtonTheme: ElevatedButtonThemeData(
-        //   style: ElevatedButton.styleFrom(
-        //     backgroundColor: Colors.blue[700],
-        //     foregroundColor: Colors.white,
-        //   ),
-        // ),
+      darkTheme: ThemeData( 
+        brightness: Brightness.dark, 
+        scaffoldBackgroundColor: Colors.black,
+        appBarTheme: AppBarTheme(
+          backgroundColor: const Color(0xFF1A1A1A), 
+          foregroundColor: Colors.white,
+          elevation: 0, 
+        ),
+        colorScheme: ColorScheme.dark(
+          primary: darkPrimaryColor, 
+          secondary: darkSecondaryColor, 
+          background: Colors.black,      
+          surface: const Color(0xFF121212),    
+          onPrimary: Colors.black,       
+          onSecondary: Colors.black,     
+          onBackground: Colors.white,    
+          onSurface: Colors.white,       
+          onError: Colors.black,         
+          error: Colors.redAccent[100]!, 
+        ),
+        cardTheme: CardThemeData( // <<< CORRECTED TO CardThemeData
+          color: const Color(0xFF1E1E1E),      
+          elevation: 2.0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        dialogBackgroundColor: Colors.black, 
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: darkPrimaryColor, 
+            foregroundColor: Colors.black, 
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: darkPrimaryColor,
+          )
+        ),
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          backgroundColor: Colors.black, 
+          selectedItemColor: darkPrimaryColor,
+          unselectedItemColor: Colors.grey[600],
+          elevation: 0,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.grey[850]?.withOpacity(0.5),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide(color: darkPrimaryColor),
+          ),
+          hintStyle: TextStyle(color: Colors.grey[600]),
+        ),
+        dividerColor: Colors.grey[800], 
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => WelcomeScreen(),
-        // This VerificationScreen is the one defined below in this file.
-        // If you have one in lib/screens/, ensure you're using the correct one.
-        '/verification': (context) => VerificationScreen(
-          phoneNumber: ModalRoute.of(context)!.settings.arguments as String,
-        ),
+        '/': (context) => const WelcomeScreen(),
+        '/verification': (context) {
+          final Object? args = ModalRoute.of(context)!.settings.arguments;
+          final String phoneNumber = (args is String) ? args : ""; 
+          return VerificationScreenLocal(phoneNumber: phoneNumber);
+        }
       },
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
-// This VerificationScreen is defined in your main.dart.
-// If you have a more up-to-date version in lib/screens/verification_screen.dart,
-// you might want to remove this one and import the other.
-class VerificationScreen extends StatelessWidget {
+class VerificationScreenLocal extends StatelessWidget {
   final String phoneNumber;
 
-  VerificationScreen({required this.phoneNumber});
+  const VerificationScreenLocal({Key? key, required this.phoneNumber}) : super(key: key); 
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Verification'),
+        title: const Text('Verification'), 
         actions: [
           IconButton(
-            icon: Icon(Icons.signal_cellular_4_bar),
+            icon: const Icon(Icons.signal_cellular_4_bar), 
             onPressed: () {},
           ),
           IconButton(
-            icon: Icon(Icons.battery_full),
+            icon: const Icon(Icons.battery_full), 
             onPressed: () {},
           ),
         ],
@@ -94,17 +134,17 @@ class VerificationScreen extends StatelessWidget {
           children: [
             Text(
               'Enter the 4-digit code sent via SMS at $phoneNumber.',
-              style: TextStyle(fontSize: 18),
+              style: const TextStyle(fontSize: 18), 
             ),
-            SizedBox(height: 20),
-            Text('Changed your mobile number?'),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
+            const Text('Changed your mobile number?'), 
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(4, (index) => // Assuming 4 digits for this example
-              Container(
+              children: List.generate(4, (index) => 
+              SizedBox( 
                 width: 50,
-                child: TextField(
+                child: const TextField( 
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
                   ),
@@ -112,11 +152,11 @@ class VerificationScreen extends StatelessWidget {
               ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Center(
               child: ElevatedButton(
                 onPressed: () {},
-                child: Text('Resend code by SMS'),
+                child: const Text('Resend code by SMS'), 
               ),
             ),
           ],
