@@ -18,7 +18,9 @@ class RegistrationScreen extends StatefulWidget {
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _nameController = TextEditingController();
+  // MODIFIED: Use separate controllers for first and last name
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   // New controllers for optional vehicle details
@@ -34,7 +36,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         _isLoading = true;
       });
 
-      String name = _nameController.text.trim();
+      // MODIFIED: Get first and last name and combine them
+      String firstName = _firstNameController.text.trim();
+      String lastName = _lastNameController.text.trim();
+      String fullName = '$firstName $lastName'.trim(); // Combine and trim any extra space if last name is empty
+      
       String email = _emailController.text.trim();
       String address = _addressController.text.trim();
       // Get optional vehicle details
@@ -48,15 +54,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               ? _vehicleModelController.text.trim() 
                               : null;
       
-      // Ensure all or none for vehicle details if any is partially filled by user
-      // Though ApiService.registerUser handles this by only sending if all three are non-empty,
-      // this client-side check can provide immediate feedback if desired, or be removed
-      // if we rely solely on ApiService and backend logic.
-      // For now, let ApiService and backend handle the "all or nothing" logic.
-
       try {
         final response = await ApiService.registerUser(
-          name: name,
+          name: fullName, // Send the combined full name
           email: email,
           phone: widget.phoneNumber,
           countryCode: widget.countryCode,
@@ -84,7 +84,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Registration successful, but user data was not returned. Please try logging in.')),
               );
-              // Optionally navigate to login or show other message
             }
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -110,10 +109,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    // MODIFIED: Dispose new name controllers
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
     _addressController.dispose();
-    // Dispose new vehicle controllers
     _vehicleNoController.dispose();
     _vehicleTypeController.dispose();
     _vehicleModelController.dispose();
@@ -139,19 +139,40 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
+              // MODIFIED: First Name TextFormField
               TextFormField(
-                controller: _nameController,
+                controller: _firstNameController,
                 decoration: const InputDecoration(
-                  labelText: 'Full Name',
+                  labelText: 'First Name',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
+                  prefixIcon: Icon(Icons.person_outline),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter your full name';
+                    return 'Please enter your first name';
                   }
                   return null;
                 },
+                textInputAction: TextInputAction.next,
+              ),
+              const SizedBox(height: 16),
+              // MODIFIED: Last Name TextFormField
+              TextFormField(
+                controller: _lastNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Last Name',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
+                // Last name can be optional depending on your requirements, adjust validator accordingly
+                validator: (value) {
+                  // Example: making last name optional
+                  // if (value == null || value.trim().isEmpty) {
+                  //   return 'Please enter your last name';
+                  // }
+                  return null; 
+                },
+                textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -171,6 +192,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   }
                   return null;
                 },
+                textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -180,10 +202,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.home),
                 ),
-                // No validator as it's optional
+                textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 24),
-              // Optional Vehicle Details Section
               Text(
                 'Vehicle Details (Optional)',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -198,7 +219,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   prefixIcon: Icon(Icons.directions_car_filled_outlined),
                 ),
                 textInputAction: TextInputAction.next,
-                // No validator as it's optional
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -210,7 +230,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   prefixIcon: Icon(Icons.two_wheeler_outlined),
                 ),
                 textInputAction: TextInputAction.next,
-                // No validator as it's optional
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -222,7 +241,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   prefixIcon: Icon(Icons.branding_watermark_outlined),
                 ),
                 textInputAction: TextInputAction.done,
-                // No validator as it's optional
               ),
               const SizedBox(height: 24),
               ElevatedButton(
