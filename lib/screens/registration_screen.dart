@@ -20,7 +20,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _addressController = TextEditingController(); 
+  final TextEditingController _addressController = TextEditingController();
+  // New controllers for optional vehicle details
+  final TextEditingController _vehicleNoController = TextEditingController();
+  final TextEditingController _vehicleTypeController = TextEditingController();
+  final TextEditingController _vehicleModelController = TextEditingController();
 
   bool _isLoading = false;
 
@@ -30,17 +34,36 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         _isLoading = true;
       });
 
-      String name = _nameController.text;
-      String email = _emailController.text;
-      String address = _addressController.text; 
+      String name = _nameController.text.trim();
+      String email = _emailController.text.trim();
+      String address = _addressController.text.trim();
+      // Get optional vehicle details
+      String? vehicleNo = _vehicleNoController.text.trim().isNotEmpty 
+                           ? _vehicleNoController.text.trim() 
+                           : null;
+      String? vehicleType = _vehicleTypeController.text.trim().isNotEmpty 
+                             ? _vehicleTypeController.text.trim() 
+                             : null;
+      String? vehicleModel = _vehicleModelController.text.trim().isNotEmpty 
+                              ? _vehicleModelController.text.trim() 
+                              : null;
+      
+      // Ensure all or none for vehicle details if any is partially filled by user
+      // Though ApiService.registerUser handles this by only sending if all three are non-empty,
+      // this client-side check can provide immediate feedback if desired, or be removed
+      // if we rely solely on ApiService and backend logic.
+      // For now, let ApiService and backend handle the "all or nothing" logic.
 
       try {
         final response = await ApiService.registerUser(
           name: name,
           email: email,
-          phone: widget.phoneNumber, 
+          phone: widget.phoneNumber,
           countryCode: widget.countryCode,
-          address: address.isNotEmpty ? address : null, 
+          address: address.isNotEmpty ? address : null,
+          vehicleNo: vehicleNo,
+          vehicleType: vehicleType,
+          vehicleModel: vehicleModel,
         );
 
         if (mounted) {
@@ -48,20 +71,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             Map<String, dynamic>? newUserData = response['user_data'] as Map<String, dynamic>?;
 
             if (newUserData != null) {
-              // Registration successful, navigate to AppShell with the new user data
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => AppShell( // Navigate to AppShell
-                    userData: newUserData, 
+                  builder: (context) => AppShell(
+                    userData: newUserData,
                   ),
                 ),
-                (Route<dynamic> route) => false, // Remove all previous routes
+                (Route<dynamic> route) => false,
               );
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Registration successful, but user data was not returned. Please try logging in.')),
               );
+              // Optionally navigate to login or show other message
             }
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -89,7 +112,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
-    _addressController.dispose(); 
+    _addressController.dispose();
+    // Dispose new vehicle controllers
+    _vehicleNoController.dispose();
+    _vehicleTypeController.dispose();
+    _vehicleModelController.dispose();
     super.dispose();
   }
 
@@ -153,22 +180,65 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.home),
                 ),
+                // No validator as it's optional
+              ),
+              const SizedBox(height: 24),
+              // Optional Vehicle Details Section
+              Text(
+                'Vehicle Details (Optional)',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _vehicleNoController,
+                decoration: const InputDecoration(
+                  labelText: 'Vehicle Number (Optional)',
+                  hintText: 'e.g., ABC-1234',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.directions_car_filled_outlined),
+                ),
+                textInputAction: TextInputAction.next,
+                // No validator as it's optional
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _vehicleTypeController,
+                decoration: const InputDecoration(
+                  labelText: 'Vehicle Type (Optional)',
+                  hintText: 'e.g., Car, Bike, Van',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.two_wheeler_outlined),
+                ),
+                textInputAction: TextInputAction.next,
+                // No validator as it's optional
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _vehicleModelController,
+                decoration: const InputDecoration(
+                  labelText: 'Vehicle Model (Optional)',
+                  hintText: 'e.g., Toyota Corolla, Honda CB Shine',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.branding_watermark_outlined),
+                ),
+                textInputAction: TextInputAction.done,
+                // No validator as it's optional
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.white,               
-                  backgroundColor: Colors.blue,                
-                  minimumSize: const Size(double.infinity, 50), 
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.blue,
+                  minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10), 
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  elevation: 5,                                
+                  elevation: 5,
                   textStyle: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 10), 
+                  padding: const EdgeInsets.symmetric(vertical: 10),
                 ),
                 onPressed: _isLoading ? null : _registerUser,
                 child: _isLoading
