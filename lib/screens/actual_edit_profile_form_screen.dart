@@ -19,7 +19,9 @@ class ActualEditProfileFormScreen extends StatefulWidget {
 class _ActualEditProfileFormScreenState
     extends State<ActualEditProfileFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _nameController;
+  // MODIFIED: Controllers for first and last name
+  late TextEditingController _firstNameController;
+  late TextEditingController _lastNameController;
   late TextEditingController _emailController;
   late TextEditingController _addressController;
   int? _userId;
@@ -29,7 +31,21 @@ class _ActualEditProfileFormScreenState
   void initState() {
     super.initState();
     _userId = widget.initialUserData['id'] as int?;
-    _nameController = TextEditingController(text: widget.initialUserData['name']?.toString() ?? '');
+
+    // Split initial full name into first and last names
+    String initialFullName = widget.initialUserData['name']?.toString() ?? '';
+    String initialFirstName = '';
+    String initialLastName = '';
+    List<String> nameParts = initialFullName.split(' ');
+    if (nameParts.isNotEmpty) {
+      initialFirstName = nameParts[0];
+      if (nameParts.length > 1) {
+        initialLastName = nameParts.sublist(1).join(' ').trim();
+      }
+    }
+
+    _firstNameController = TextEditingController(text: initialFirstName);
+    _lastNameController = TextEditingController(text: initialLastName);
     _emailController = TextEditingController(text: widget.initialUserData['email']?.toString() ?? '');
     _addressController = TextEditingController(text: widget.initialUserData['address']?.toString() ?? '');
   }
@@ -49,25 +65,39 @@ class _ActualEditProfileFormScreenState
         _isLoading = true;
       });
 
+      // MODIFIED: Combine first and last name to full name for API
+      String firstName = _firstNameController.text.trim();
+      String lastName = _lastNameController.text.trim();
+      String fullName = '$firstName $lastName'.trim();
+
       try {
         final response = await ApiService.updateUserDetails(
           userId: _userId!,
-          name: _nameController.text,
-          email: _emailController.text,
-          address: _addressController.text.isNotEmpty ? _addressController.text : null,
+          name: fullName, // Send combined full name
+          email: _emailController.text.trim(),
+          address: _addressController.text.trim().isNotEmpty ? _addressController.text.trim() : null,
         );
 
         if (mounted) {
           if (response['status'] == 'success') {
-            Map<String, dynamic> updatedUserData =
-                response['user_data'] ?? widget.initialUserData;
+            Map<String, dynamic> updatedUserDataFromResponse =
+                response['user_data'] as Map<String, dynamic>? ?? {};
+            
+            // Ensure the local data is updated with what the server returns
+            // including the combined name if the server provides it back directly
+            // or construct it if only first/last are returned (though our PHP sends combined)
+            Map<String, dynamic> finalUpdatedUserData = Map.from(widget.initialUserData);
+            finalUpdatedUserData.addAll(updatedUserDataFromResponse);
+             // Ensure the 'name' field in finalUpdatedUserData is the combined one
+            finalUpdatedUserData['name'] = fullName; 
+
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Profile updated successfully!')),
             );
             
-            widget.onUserDataUpdated?.call(updatedUserData);
+            widget.onUserDataUpdated?.call(finalUpdatedUserData);
             
-            Navigator.pop(context, updatedUserData); // Pop back to Account screen
+            Navigator.pop(context, finalUpdatedUserData); // Pop back to Account screen
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(response['message'] ?? 'Failed to update profile.')),
@@ -92,7 +122,9 @@ class _ActualEditProfileFormScreenState
 
   @override
   void dispose() {
-    _nameController.dispose();
+    // MODIFIED: Dispose new name controllers
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
     _addressController.dispose();
     super.dispose();
@@ -100,7 +132,6 @@ class _ActualEditProfileFormScreenState
 
   @override
   Widget build(BuildContext context) {
-    // Display phone number if available (read-only for this form)
     String displayPhone = widget.initialUserData['country_code']?.toString() ?? '';
     displayPhone += widget.initialUserData['phone']?.toString() ?? '';
     if (displayPhone.isEmpty) {
@@ -127,19 +158,39 @@ class _ActualEditProfileFormScreenState
                     textAlign: TextAlign.start,
                   ),
                 ),
+              // MODIFIED: First Name TextFormField
               TextFormField(
-                controller: _nameController,
+                controller: _firstNameController,
                 decoration: const InputDecoration(
-                  labelText: 'Full Name',
+                  labelText: 'First Name',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
+                  prefixIcon: Icon(Icons.person_outline),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter your full name';
+                    return 'Please enter your first name';
                   }
                   return null;
                 },
+                textInputAction: TextInputAction.next,
+              ),
+              const SizedBox(height: 16),
+              // MODIFIED: Last Name TextFormField
+              TextFormField(
+                controller: _lastNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Last Name',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
+                // Last name can be optional, adjust validator if needed
+                validator: (value) {
+                  // if (value == null || value.trim().isEmpty) {
+                  //   return 'Please enter your last name';
+                  // }
+                  return null;
+                },
+                textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -159,6 +210,7 @@ class _ActualEditProfileFormScreenState
                   }
                   return null;
                 },
+                textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -170,7 +222,8 @@ class _ActualEditProfileFormScreenState
                   hintText: 'Enter your address (optional)',
                 ),
                 minLines: 1,
-                maxLines: 3, // Allow address to be a bit longer
+                maxLines: 3,
+                textInputAction: TextInputAction.done,
               ),
               const SizedBox(height: 30),
               ElevatedButton(

@@ -1,38 +1,43 @@
 <?php
-// Enable full error reporting for debugging (helpful during setup)
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ob_start(); // Start output buffering at the very beginning
 
-$servername = "localhost";    // MySQL server hostname (usually "localhost" or "127.0.0.1")
-$username = "root";           // Your MySQL username
-$password = "Pasindu@12236";    // Your MySQL password
-$dbname = "washio";           // <<< CORRECTED DATABASE NAME
-$port = 3307;                 // Your MySQL port
+// Enable full error reporting (to be logged)
+error_reporting(E_ALL);
+// IMPORTANT: Turn off displaying errors directly in the output for API stability
+ini_set('display_errors', 0);
+// Ensure PHP logs errors
+ini_set('log_errors', 1); 
+
+$servername = "localhost";
+$username = "root";
+$password = "Pasindu@12236"; // Please double-check this password
+$dbname = "washio";
+$port = 3307; // Please double-check this port with your XAMPP MySQL (often 3306)
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname, $port);
 
 // Check connection
 if ($conn->connect_error) {
-    // Log detailed error to the PHP error log
-    error_log("Database Connection failed: " . $conn->connect_error . " (Details: Server=$servername, User=$username, DB=$dbname, Port=$port)");
+    error_log("Database Connection failed in db.php: " . $conn->connect_error . " (Details: Server=$servername, User=$username, DB=$dbname, Port=$port)");
     
-    // Send a generic error response to the client
-    header('Content-Type: application/json');
+    ob_end_clean(); // Clean any previous buffer
+    if (!headers_sent()) {
+        header('Content-Type: application/json');
+    }
     echo json_encode([
         'status' => 'error',
-        'message' => 'Could not connect to the database. Please check server logs for more details.',
+        'message' => 'PHP: Database connection failed. Check server logs.',
+        'db_error_message' => $conn->connect_error // Provide specific DB error for easier client-side debugging if needed
     ]);
     exit; // Stop script execution if connection fails
 }
 
-// Set character set to utf8mb4 for better Unicode support
 if (!$conn->set_charset("utf8mb4")) {
-    error_log("Error loading character set utf8mb4: " . $conn->error);
+    error_log("Error loading character set utf8mb4 in db.php: " . $conn->error);
+    // Not exiting here, as the connection might still be usable
 }
 
-// Optional: Log successful connections for debugging (remove in production):
-// error_log("db.php: Successfully connected to database. (Server=$servername, User=$username, DB=$dbname, Port=$port)");
-
-// The $conn variable is now ready to be used by any PHP script that includes this db.php file.
+// error_log("db.php: Successfully connected to database."); // Keep for debugging if needed, but commented for production
+// Do not ob_end_clean() here if connection is successful, the including script manages its own output.
 ?>
