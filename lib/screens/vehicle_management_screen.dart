@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../api.dart'; // Import ApiService
+import './add_vehicle_screen.dart'; // Import the new add vehicle screen
+import './edit_vehicle_screen.dart'; // Import the new edit vehicle screen
 
 class VehicleManagementScreen extends StatefulWidget {
   final int userId;
@@ -48,134 +50,33 @@ class _VehicleManagementScreenState extends State<VehicleManagementScreen> {
     }
   }
 
-  void _showAddOrEditVehicleDialog({Map<String, dynamic>? vehicleToEdit}) {
-    final isEditing = vehicleToEdit != null;
-    final _vehicleFormKey = GlobalKey<FormState>();
-    String dialogTitle = isEditing ? 'Edit Vehicle' : 'Add New Vehicle';
-
-    final TextEditingController vehicleNoController =
-        TextEditingController(text: vehicleToEdit?['vehicle_no']?.toString() ?? '');
-    final TextEditingController vehicleTypeController =
-        TextEditingController(text: vehicleToEdit?['vehicle_type']?.toString() ?? '');
-    final TextEditingController vehicleModelController =
-        TextEditingController(text: vehicleToEdit?['vehicle_model']?.toString() ?? '');
-    
-    bool isDialogSubmitting = false;
-
-    showDialog(
-      context: context,
-      barrierDismissible: !isDialogSubmitting, // Prevent dismissal during submission
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text(dialogTitle),
-              content: Form(
-                key: _vehicleFormKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      TextFormField(
-                        controller: vehicleNoController,
-                        decoration: InputDecoration(labelText: 'Vehicle Number', hintText: 'e.g., ABC-1234'),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter vehicle number';
-                          }
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 8),
-                      TextFormField(
-                        controller: vehicleTypeController,
-                        decoration: InputDecoration(labelText: 'Vehicle Type', hintText: 'e.g., Car, Bike'),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter vehicle type';
-                          }
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 8),
-                      TextFormField(
-                        controller: vehicleModelController,
-                        decoration: InputDecoration(labelText: 'Vehicle Model', hintText: 'e.g., Toyota Corolla'),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter vehicle model';
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              actions: <Widget>[
-                TextButton(
-                  child: Text('Cancel'),
-                  onPressed: isDialogSubmitting ? null : () => Navigator.of(context).pop(),
-                ),
-                ElevatedButton(
-                  child: isDialogSubmitting 
-                      ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white))) 
-                      : Text(isEditing ? 'Save Changes' : 'Add Vehicle'),
-                  onPressed: isDialogSubmitting ? null : () async {
-                    if (_vehicleFormKey.currentState!.validate()) {
-                      setDialogState(() => isDialogSubmitting = true);
-                      try {
-                        final vehicleNo = vehicleNoController.text.trim();
-                        final vehicleType = vehicleTypeController.text.trim();
-                        final vehicleModel = vehicleModelController.text.trim();
-                        Map<String, dynamic> response;
-
-                        if (isEditing) {
-                          response = await ApiService.updateVehicle(
-                            vehicleId: vehicleToEdit!['vehicle_id'] as int,
-                            userId: widget.userId,
-                            vehicleNo: vehicleNo,
-                            vehicleType: vehicleType,
-                            vehicleModel: vehicleModel,
-                          );
-                        } else {
-                          response = await ApiService.addVehicle(
-                            userId: widget.userId,
-                            vehicleNo: vehicleNo,
-                            vehicleType: vehicleType,
-                            vehicleModel: vehicleModel,
-                          );
-                        }
-
-                        if (mounted) {
-                           ScaffoldMessenger.of(context).showSnackBar(
-                             SnackBar(content: Text(response['message'] ?? (isEditing ? 'Vehicle updated' : 'Vehicle added')), backgroundColor: response['status'] == 'success' ? Colors.green : Colors.red),
-                           );
-                          if (response['status'] == 'success') {
-                            Navigator.of(context).pop();
-                            _fetchUserVehicles(); 
-                          }
-                        }
-                      } catch (e) {
-                         if (mounted) {
-                           ScaffoldMessenger.of(context).showSnackBar(
-                             SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: Colors.red),
-                           );
-                         }
-                      } finally {
-                         if (mounted) {
-                           setDialogState(() => isDialogSubmitting = false);
-                         }
-                      }
-                    }
-                  },
-                ),
-              ],
-            );
-          }
-        );
-      },
+  Future<void> _navigateToAddVehicleScreen() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddVehicleScreen(userId: widget.userId),
+      ),
     );
+
+    if (result == true && mounted) {
+      _fetchUserVehicles(); // Refresh the list if a vehicle was added
+    }
+  }
+
+  Future<void> _navigateToEditVehicleScreen(Map<String, dynamic> vehicleData) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditVehicleScreen(
+          userId: widget.userId,
+          vehicleData: vehicleData,
+        ),
+      ),
+    );
+
+    if (result == true && mounted) {
+      _fetchUserVehicles(); // Refresh the list if a vehicle was updated
+    }
   }
 
   void _showDeleteVehicleDialog(int vehicleId, String vehicleNo) {
@@ -271,7 +172,7 @@ class _VehicleManagementScreenState extends State<VehicleManagementScreen> {
                 IconButton(
                   icon: Icon(Icons.edit_outlined, color: Colors.blueAccent),
                   tooltip: 'Edit Vehicle',
-                  onPressed: () => _showAddOrEditVehicleDialog(vehicleToEdit: vehicle),
+                  onPressed: () => _navigateToEditVehicleScreen(vehicle), // Updated to call new navigation method
                 ),
                 IconButton(
                   icon: Icon(Icons.delete_outline, color: Colors.redAccent),
@@ -294,7 +195,7 @@ class _VehicleManagementScreenState extends State<VehicleManagementScreen> {
       ),
       body: _buildVehicleList(),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddOrEditVehicleDialog(),
+        onPressed: _navigateToAddVehicleScreen, 
         icon: Icon(Icons.add),
         label: Text('Add Vehicle'),
         tooltip: 'Add a new vehicle',
