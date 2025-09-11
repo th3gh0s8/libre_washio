@@ -3,9 +3,7 @@ ob_start(); // Start output buffering at the very beginning
 
 // Enable full error reporting (to be logged)
 error_reporting(E_ALL);
-// IMPORTANT: Turn off displaying errors directly in the output for API stability
-ini_set('display_errors', 0);
-// Ensure PHP logs errors
+ini_set('display_errors', 0); // IMPORTANT: Turn off displaying errors directly in the output
 ini_set('log_errors', 1); 
 
 $servername = "localhost";
@@ -14,16 +12,33 @@ $password = "Pasindu@12236"; // Please double-check this password
 $dbname = "washio";
 $port = 3307; // Please double-check this port with your XAMPP MySQL (often 3306)
 
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname, $port);
+$conn = null; // Initialize $conn
+$db_connection_error_message = 'Connection not attempted or failed before error property set.';
 
-// Check connection
-if ($conn->connect_error) {
-    error_log("Database Connection failed in db.php: " . $conn->connect_error . " (Details: Server=$servername, User=$username, DB=$dbname, Port=$port)");
-    
-    $db_connection_error_message = $conn->connect_error;
-    $conn = null; // Explicitly set $conn to null before exiting on error
+$link = mysqli_init();
+if (!$link) {
+    $db_connection_error_message = 'mysqli_init failed';
+    error_log("Database Connection failed in db.php: mysqli_init failed");
+} else {
+    // Set connection timeout to 5 seconds
+    if (!mysqli_options($link, MYSQLI_OPT_CONNECT_TIMEOUT, 5)) {
+        // Log if setting option fails, but attempt to connect anyway
+        error_log("Database Connection warning in db.php: Failed to set MYSQLI_OPT_CONNECT_TIMEOUT");
+    }
 
+    // Attempt to connect
+    if (@mysqli_real_connect($link, $servername, $username, $password, $dbname, $port)) {
+        $conn = $link;
+    } else {
+        // @ suppresses PHP warning for connection, we handle it via mysqli_connect_error()
+        $db_connection_error_message = mysqli_connect_error(); // Get connection error
+        error_log("Database Connection failed in db.php (mysqli_real_connect): " . $db_connection_error_message . " (Details: Server=$servername, User=$username, DB=$dbname, Port=$port)");
+    }
+}
+
+// Check connection (either $conn is null if init/real_connect failed, or $conn->connect_error might be set by mysqli if link was made but then error occurred)
+// Note: mysqli_connect_error() is preferred for procedural style after mysqli_real_connect failure.
+if (!$conn) { // This condition is met if mysqli_init failed or mysqli_real_connect returned false
     ob_end_clean(); // Clean any previous buffer
     if (!headers_sent()) {
         header('Content-Type: application/json');
@@ -36,6 +51,7 @@ if ($conn->connect_error) {
     exit; // Stop script execution if connection fails
 }
 
+// If $conn is not null, it means mysqli_real_connect succeeded and $conn is the link resource
 if (!$conn->set_charset("utf8mb4")) {
     error_log("Error loading character set utf8mb4 in db.php: " . $conn->error);
 }
