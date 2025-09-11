@@ -26,7 +26,7 @@ if (empty($user_id) || !filter_var($user_id, FILTER_VALIDATE_INT)) {
 
 // Security Check: Verify the vehicle belongs to the user before deleting
 // This is crucial to prevent unauthorized deletions.
-$stmt_check_owner = $conn->prepare("SELECT ID FROM vehicle WHERE ID = ? AND userTB = ?");
+$stmt_check_owner = $conn->prepare("SELECT ID FROM vehicles WHERE ID = ? AND userTB = ?");
 if (!$stmt_check_owner) {
     echo json_encode(['status' => 'error', 'message' => 'Prepare statement failed (check owner): ' . $conn->error]);
     exit;
@@ -42,7 +42,7 @@ if ($result_check_owner->num_rows == 0) {
 $stmt_check_owner->close();
 
 // Prepare SQL to delete vehicle
-$sql = "DELETE FROM vehicle WHERE ID = ? AND userTB = ?"; // Double check userTB for safety
+$sql = "DELETE FROM vehicles WHERE ID = ? AND userTB = ?"; // Double check userTB for safety
 $stmt = $conn->prepare($sql);
 
 if (!$stmt) {
