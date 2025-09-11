@@ -33,7 +33,7 @@ if (empty($vehicle_model)) {
 }
 
 // Optional: Check if this vehicle number already exists for this user
-$stmt_check = $conn->prepare("SELECT ID FROM vehicle WHERE userTB = ? AND vehicle_no = ?");
+$stmt_check = $conn->prepare("SELECT ID FROM vehicles WHERE userTB = ? AND vehicle_no = ?");
 if (!$stmt_check) {
     echo json_encode(['status' => 'error', 'message' => 'Prepare statement failed (check vehicle): ' . $conn->error]);
     exit;
@@ -49,7 +49,7 @@ if ($result_check->num_rows > 0) {
 $stmt_check->close();
 
 // Prepare SQL to insert new vehicle
-$sql = "INSERT INTO vehicle (userTB, vehicle_no, vehicle_type, vehicle_model) VALUES (?, ?, ?, ?)";
+$sql = "INSERT INTO vehicles (userTB, vehicle_no, vehicle_type, vehicle_model) VALUES (?, ?, ?, ?)";
 $stmt = $conn->prepare($sql);
 
 if (!$stmt) {

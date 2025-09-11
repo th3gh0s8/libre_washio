@@ -38,7 +38,7 @@ if (empty($vehicle_model)) {
 }
 
 // Security Check: Verify the vehicle belongs to the user before updating
-$stmt_check_owner = $conn->prepare("SELECT ID FROM vehicle WHERE ID = ? AND userTB = ?");
+$stmt_check_owner = $conn->prepare("SELECT ID FROM vehicles WHERE ID = ? AND userTB = ?");
 if (!$stmt_check_owner) {
     echo json_encode(['status' => 'error', 'message' => 'Prepare statement failed (check owner): ' . $conn->error]);
     exit;
@@ -54,7 +54,7 @@ if ($result_check_owner->num_rows == 0) {
 $stmt_check_owner->close();
 
 // Optional: Check if the new vehicle number conflicts with another vehicle of THE SAME USER (excluding the current vehicle being updated)
-$stmt_check_conflict = $conn->prepare("SELECT ID FROM vehicle WHERE userTB = ? AND vehicle_no = ? AND ID != ?");
+$stmt_check_conflict = $conn->prepare("SELECT ID FROM vehicles WHERE userTB = ? AND vehicle_no = ? AND ID != ?");
 if (!$stmt_check_conflict) {
     echo json_encode(['status' => 'error', 'message' => 'Prepare statement failed (check conflict): ' . $conn->error]);
     exit;
@@ -71,7 +71,7 @@ $stmt_check_conflict->close();
 
 
 // Prepare SQL to update vehicle
-$sql = "UPDATE vehicle SET vehicle_no = ?, vehicle_type = ?, vehicle_model = ? WHERE ID = ? AND userTB = ?"; // Double check userTB for safety
+$sql = "UPDATE vehicles SET vehicle_no = ?, vehicle_type = ?, vehicle_model = ? WHERE ID = ? AND userTB = ?"; // Double check userTB for safety
 $stmt = $conn->prepare($sql);
 
 if (!$stmt) {

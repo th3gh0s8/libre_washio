@@ -21,6 +21,9 @@ $conn = new mysqli($servername, $username, $password, $dbname, $port);
 if ($conn->connect_error) {
     error_log("Database Connection failed in db.php: " . $conn->connect_error . " (Details: Server=$servername, User=$username, DB=$dbname, Port=$port)");
     
+    $db_connection_error_message = $conn->connect_error;
+    $conn = null; // Explicitly set $conn to null before exiting on error
+
     ob_end_clean(); // Clean any previous buffer
     if (!headers_sent()) {
         header('Content-Type: application/json');
@@ -28,16 +31,12 @@ if ($conn->connect_error) {
     echo json_encode([
         'status' => 'error',
         'message' => 'PHP: Database connection failed. Check server logs.',
-        'db_error_message' => $conn->connect_error // Provide specific DB error for easier client-side debugging if needed
+        'db_error_message' => $db_connection_error_message 
     ]);
     exit; // Stop script execution if connection fails
 }
 
 if (!$conn->set_charset("utf8mb4")) {
     error_log("Error loading character set utf8mb4 in db.php: " . $conn->error);
-    // Not exiting here, as the connection might still be usable
 }
-
-// error_log("db.php: Successfully connected to database."); // Keep for debugging if needed, but commented for production
-// Do not ob_end_clean() here if connection is successful, the including script manages its own output.
 ?>
