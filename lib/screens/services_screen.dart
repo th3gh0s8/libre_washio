@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // For date formatting
+// import 'package:intl/intl.dart'; // Removed as no longer used for date formatting
 import '../api.dart'; // Import ApiService
 
 class ServicesScreen extends StatefulWidget {
@@ -92,24 +92,12 @@ class _ServicesScreenState extends State<ServicesScreen> {
     });
   }
 
-  // Helper to format estimated time if it's a DATETIME string
-  String _formatEstimatedTime(String? dateTimeStr) {
-    if (dateTimeStr == null) return 'N/A';
-    try {
-      // Assuming estimated_time in station_services is just a TIME type or an interval stored as string HH:MM:SS
-      // If it's a full DATETIME string from which you only want time:
-      final dateTime = DateTime.parse(dateTimeStr);
-      return DateFormat.jm().format(dateTime); // Example: 5:30 PM
-      // If it's already a duration string like '00:30:00' for 30 minutes, you might parse and format differently or use as is.
-      // For simplicity, if it's just a time like "00:30:00", let's try to show HH:MM
-      // if (dateTimeStr.length == 8 && dateTimeStr[2] == ':' && dateTimeStr[5] == ':') {
-      //   return dateTimeStr.substring(0, 5); // Returns HH:MM
-      // }
-    } catch (e) {
-      // If parsing fails, return the original string or a placeholder
-      return dateTimeStr; // Or 'Invalid time format'
+  // Updated to simply return the string as estimated_time is now VARCHAR
+  String _formatEstimatedTime(String? timeStr) {
+    if (timeStr == null || timeStr.trim().isEmpty) {
+      return 'N/A';
     }
-    return dateTimeStr; // Fallback
+    return timeStr; // Directly return the string
   }
 
   Widget _buildStationsList() {
@@ -133,7 +121,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
           margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
           elevation: 3,
           child: ListTile(
-            leading: Icon(Icons.storefront_outlined, color: Theme.of(context).primaryColor, size: 30),
+            // Updated icon color for better dark mode adaptability
+            leading: Icon(Icons.storefront_outlined, color: Theme.of(context).colorScheme.primary, size: 30),
             title: Text(stationName, style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text(stationAddress, maxLines: 2, overflow: TextOverflow.ellipsis),
             trailing: const Icon(Icons.chevron_right),
@@ -145,7 +134,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
   }
 
   Widget _buildSelectedStationServices() {
-    if (_selectedStation == null) return const SizedBox.shrink(); // Should not happen if this widget is built
+    if (_selectedStation == null) return const SizedBox.shrink();
 
     final stationName = _selectedStation!['name']?.toString() ?? 'Station';
     final stationAddress = _selectedStation!['address']?.toString() ?? 'N/A';
@@ -161,14 +150,14 @@ class _ServicesScreenState extends State<ServicesScreen> {
           child: Padding(padding: EdgeInsets.all(16.0), child: Text('No services listed for this station.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
     } else {
       servicesContent = ListView.separated(
-        shrinkWrap: true, // Important for ListView inside Column
-        physics: const NeverScrollableScrollPhysics(), // If inside another scrollable
+        shrinkWrap: true, 
+        physics: const NeverScrollableScrollPhysics(), 
         itemCount: _servicesForSelectedStation.length,
         separatorBuilder: (context, index) => const Divider(height: 1),
         itemBuilder: (context, index) {
           final service = _servicesForSelectedStation[index];
           final serviceName = service['service_name']?.toString() ?? 'Unnamed Service';
-          final servicePrice = service['service_price'] != null ? '\u20B9${(service['service_price'] as num).toStringAsFixed(2)}' : 'Price not available';
+          final servicePrice = service['service_price'] != null ? '\$${(service['service_price'] as num).toStringAsFixed(2)}' : 'Price not available';
           final estimatedTime = _formatEstimatedTime(service['estimated_time']?.toString());
 
           return ListTile(
@@ -213,11 +202,11 @@ class _ServicesScreenState extends State<ServicesScreen> {
                 onPressed: _clearSelectedStation,
                 tooltip: 'Back to stations list',
               )
-            : null, // No leading when showing stations list (handled by bottom nav back behavior)
+            : null, 
         title: Text(isViewingStationDetails ? (_selectedStation!['name']?.toString() ?? 'Station Services') : 'Service Stations'),
-        automaticallyImplyLeading: !isViewingStationDetails, // Show default back if not viewing details (e.g. from bottom nav)
+        automaticallyImplyLeading: !isViewingStationDetails, 
         actions: [
-          if (!isViewingStationDetails) // Only show refresh for stations list
+          if (!isViewingStationDetails) 
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: _isLoadingStations ? null : _fetchStations,
