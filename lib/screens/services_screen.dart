@@ -135,7 +135,6 @@ class _ServicesScreenState extends State<ServicesScreen> {
     if (_selectedStation == null) return const SizedBox.shrink();
 
     final stationName = _selectedStation!['name']?.toString() ?? 'Station';
-    final stationAddress = _selectedStation!['address']?.toString() ?? 'N/A';
     final theme = Theme.of(context);
 
     Widget servicesContent;
@@ -156,7 +155,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           height: 1, 
           indent: 16, 
           endIndent: 16,
-          color: theme.dividerColor, // Explicitly set divider color
+          color: theme.dividerColor, 
         ),
         itemBuilder: (context, index) {
           final service = _servicesForSelectedStation[index];
@@ -233,18 +232,21 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
     return SingleChildScrollView(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center, 
+        crossAxisAlignment: CrossAxisAlignment.stretch, 
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+            color: theme.colorScheme.primaryContainer.withOpacity(0.3),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center, 
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'Services at:', 
-                  style: theme.textTheme.labelLarge,
-                  textAlign: TextAlign.center, 
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: theme.colorScheme.secondaryContainer,
+                  child: Icon(Icons.store, size: 40, color: theme.colorScheme.onSecondaryContainer),
                 ),
+                const SizedBox(height: 12),
                 Text(
                   stationName, 
                   style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
@@ -252,8 +254,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  stationAddress, 
-                  style: theme.textTheme.bodyMedium,
+                  "Open", // Placeholder
+                  style: theme.textTheme.bodySmall?.copyWith(color: Colors.green.shade700),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -263,7 +265,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
             indent: 16, 
             endIndent: 16, 
             height: 1,
-            color: theme.dividerColor, // Explicitly set divider color
+            color: theme.dividerColor, 
           ), 
           servicesContent,
         ],
@@ -277,14 +279,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: isViewingStationDetails 
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: _clearSelectedStation,
-                tooltip: 'Back to stations list',
-              )
-            : null, 
-        title: Text(isViewingStationDetails ? (_selectedStation!['name']?.toString() ?? 'Station Services') : 'Service Stations'),
+        leading: null, // Corrected: Let automaticallyImplyLeading handle it
+        title: Text(isViewingStationDetails ? '' : 'Service Stations'), 
         automaticallyImplyLeading: !isViewingStationDetails, 
         actions: [
           if (!isViewingStationDetails) 
@@ -292,6 +288,13 @@ class _ServicesScreenState extends State<ServicesScreen> {
               icon: const Icon(Icons.refresh),
               onPressed: _isLoadingStations ? null : _fetchStations,
               tooltip: 'Refresh Stations',
+            ),
+          // Return button for station details view, if needed outside AppBar
+          if (isViewingStationDetails)
+            IconButton(
+              icon: const Icon(Icons.close), // Or Icons.arrow_back if preferred
+              onPressed: _clearSelectedStation,
+              tooltip: 'Back to stations list',
             ),
         ],
       ),
