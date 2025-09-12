@@ -252,7 +252,6 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
-                // SizedBox(height: 8) and Text for Fee/Distance removed
                 const SizedBox(height: 4),
                 Text(
                   "Open", // Placeholder
@@ -280,13 +279,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: isViewingStationDetails 
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: _clearSelectedStation,
-                tooltip: 'Back to stations list',
-              )
-            : null, 
+        leading: null, // Corrected: Let automaticallyImplyLeading handle it
         title: Text(isViewingStationDetails ? '' : 'Service Stations'), 
         automaticallyImplyLeading: !isViewingStationDetails, 
         actions: [
@@ -295,6 +288,13 @@ class _ServicesScreenState extends State<ServicesScreen> {
               icon: const Icon(Icons.refresh),
               onPressed: _isLoadingStations ? null : _fetchStations,
               tooltip: 'Refresh Stations',
+            ),
+          // Return button for station details view, if needed outside AppBar
+          if (isViewingStationDetails)
+            IconButton(
+              icon: const Icon(Icons.close), // Or Icons.arrow_back if preferred
+              onPressed: _clearSelectedStation,
+              tooltip: 'Back to stations list',
             ),
         ],
       ),
