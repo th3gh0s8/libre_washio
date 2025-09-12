@@ -31,7 +31,6 @@ class ApiService {
   }
 
   static Future<List<Map<String, dynamic>>> getUserVehicles(int userId) async {
-    // Assuming your PHP script is get_user_vehicles.php
     final url = Uri.parse('${baseUrl}get_user_vehicles.php?user_id=$userId'); 
     try {
       final response = await http.get(url);
@@ -153,8 +152,6 @@ class ApiService {
       );
       if (response.statusCode == 200) {
         final decodedResponse = jsonDecode(response.body) as Map<String, dynamic>;
-        // The decodedResponse will contain 'status', 'message', 
-        // and now also 'otp_purpose' and 'otp_for_testing' if successful.
         return decodedResponse;
       } else {
         throw Exception('Failed to request OTP. Status code: ${response.statusCode}, Body: ${response.body}');
@@ -174,7 +171,7 @@ class ApiService {
           'country_code': countryCode,
           'local_phone_number': localPhoneNumber,
           'otp': otp,
-          'otp_purpose': otpPurpose, // This parameter is used by verify_otp.php
+          'otp_purpose': otpPurpose, 
         },
       );
       if (response.statusCode == 200) {
@@ -199,18 +196,15 @@ class ApiService {
     String? vehicleModel,
   }) async {
     final url = Uri.parse('${baseUrl}register_user.php');
-    
     Map<String, String> body = {
       'name': name,
       'email': email,
       'phone': phone,
       'country_code': countryCode,
     };
-
     if (address != null && address.isNotEmpty) {
       body['address'] = address;
     }
-
     if (vehicleNo != null && vehicleNo.isNotEmpty &&
         vehicleType != null && vehicleType.isNotEmpty &&
         vehicleModel != null && vehicleModel.isNotEmpty) {
@@ -218,14 +212,12 @@ class ApiService {
       body['vehicle_type'] = vehicleType;
       body['vehicle_model'] = vehicleModel;
     }
-
     try {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: body,
       );
-
       if (response.statusCode == 200) {
         final decodedResponse = jsonDecode(response.body) as Map<String, dynamic>;
         return decodedResponse;
@@ -255,7 +247,6 @@ class ApiService {
           if (address != null) 'address': address,
         },
       );
-
       if (response.statusCode == 200) {
         final decodedResponse = jsonDecode(response.body) as Map<String, dynamic>;
         return decodedResponse;
@@ -264,6 +255,55 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error updating user details: $e');
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getStations() async {
+    final url = Uri.parse('${baseUrl}get_stations.php');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final decodedResponse = jsonDecode(response.body) as Map<String, dynamic>;
+        if (decodedResponse['status'] == 'success') {
+          if (decodedResponse['data'] != null) {
+            final List<dynamic> stationDataList = decodedResponse['data'] as List<dynamic>;
+            return stationDataList.map((stationData) => stationData as Map<String, dynamic>).toList();
+          } else {
+            return [];
+          }
+        } else {
+          throw Exception('Failed to load stations: ${decodedResponse['message']}');
+        }
+      } else {
+        throw Exception('Failed to load stations. Status code: ${response.statusCode}, Body: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching stations: $e');
+    }
+  }
+
+  // New method to get services for a specific station
+  static Future<List<Map<String, dynamic>>> getServicesForStation(int stationId) async {
+    final url = Uri.parse('${baseUrl}get_station_services.php?station_id=$stationId');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final decodedResponse = jsonDecode(response.body) as Map<String, dynamic>;
+        if (decodedResponse['status'] == 'success') {
+          if (decodedResponse['data'] != null) {
+            final List<dynamic> serviceDataList = decodedResponse['data'] as List<dynamic>;
+            return serviceDataList.map((serviceData) => serviceData as Map<String, dynamic>).toList();
+          } else {
+            return []; // No services found for this station, but request was successful
+          }
+        } else {
+          throw Exception('Failed to load services for station $stationId: ${decodedResponse['message']}');
+        }
+      } else {
+        throw Exception('Failed to load services for station $stationId. Status code: ${response.statusCode}, Body: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching services for station $stationId: $e');
     }
   }
 }
