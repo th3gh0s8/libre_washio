@@ -92,12 +92,11 @@ class _ServicesScreenState extends State<ServicesScreen> {
     });
   }
 
-  // Updated to simply return the string as estimated_time is now VARCHAR
   String _formatEstimatedTime(String? timeStr) {
     if (timeStr == null || timeStr.trim().isEmpty) {
       return 'N/A';
     }
-    return timeStr; // Directly return the string
+    return timeStr; 
   }
 
   Widget _buildStationsList() {
@@ -109,7 +108,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           child: Padding(padding: const EdgeInsets.all(16.0), child: Text(_stationError!, style: const TextStyle(color: Colors.red, fontSize: 16), textAlign: TextAlign.center)));
     }
     if (_stations.isEmpty) {
-      return const Center(child: Padding(padding: EdgeInsets.all(16.0), child: Text('No service stations found.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
+      return const Center(child: Padding(padding: const EdgeInsets.all(16.0), child: Text('No service stations found.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
     }
     return ListView.builder(
       itemCount: _stations.length,
@@ -121,7 +120,6 @@ class _ServicesScreenState extends State<ServicesScreen> {
           margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
           elevation: 3,
           child: ListTile(
-            // Updated icon color for better dark mode adaptability
             leading: Icon(Icons.storefront_outlined, color: Theme.of(context).colorScheme.primary, size: 30),
             title: Text(stationName, style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text(stationAddress, maxLines: 2, overflow: TextOverflow.ellipsis),
@@ -138,6 +136,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
     final stationName = _selectedStation!['name']?.toString() ?? 'Station';
     final stationAddress = _selectedStation!['address']?.toString() ?? 'N/A';
+    final theme = Theme.of(context);
 
     Widget servicesContent;
     if (_isLoadingServices) {
@@ -147,43 +146,125 @@ class _ServicesScreenState extends State<ServicesScreen> {
           child: Padding(padding: const EdgeInsets.all(16.0), child: Text(_serviceError!, style: const TextStyle(color: Colors.red, fontSize: 16), textAlign: TextAlign.center)));
     } else if (_servicesForSelectedStation.isEmpty) {
       servicesContent = const Center(
-          child: Padding(padding: EdgeInsets.all(16.0), child: Text('No services listed for this station.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
+          child: Padding(padding: const EdgeInsets.all(16.0), child: Text('No services listed for this station.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
     } else {
       servicesContent = ListView.separated(
         shrinkWrap: true, 
         physics: const NeverScrollableScrollPhysics(), 
         itemCount: _servicesForSelectedStation.length,
-        separatorBuilder: (context, index) => const Divider(height: 1),
+        separatorBuilder: (context, index) => Divider(
+          height: 1, 
+          indent: 16, 
+          endIndent: 16,
+          color: theme.dividerColor, // Explicitly set divider color
+        ),
         itemBuilder: (context, index) {
           final service = _servicesForSelectedStation[index];
           final serviceName = service['service_name']?.toString() ?? 'Unnamed Service';
-          final servicePrice = service['service_price'] != null ? '\$${(service['service_price'] as num).toStringAsFixed(2)}' : 'Price not available';
+          final servicePrice = service['service_price'] != null ? '\$${(service['service_price'] as num).toStringAsFixed(2)}' : 'Price N/A';
           final estimatedTime = _formatEstimatedTime(service['estimated_time']?.toString());
 
-          return ListTile(
-            title: Text(serviceName, style: const TextStyle(fontWeight: FontWeight.w500)),
-            subtitle: Text('Time: $estimatedTime'),
-            trailing: Text(servicePrice, style: TextStyle(color: Theme.of(context).primaryColorDark, fontWeight: FontWeight.bold)),
-            // onTap: () { /* TODO: Maybe navigate to service booking or details */ }
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center, 
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        serviceName, 
+                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        servicePrice,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: theme.colorScheme.primary, 
+                          fontWeight: FontWeight.w600
+                        ),
+                      ),
+                      if (estimatedTime != 'N/A') ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Time: $estimatedTime',
+                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16), 
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      // TODO: Implement add to cart or service selection logic
+                      print('Add button tapped for $serviceName');
+                    },
+                    borderRadius: BorderRadius.circular(20), 
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary,
+                        shape: BoxShape.circle,
+                         boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 3,
+                              offset: const Offset(1,1),
+                            )
+                          ]
+                      ),
+                      child: const SizedBox(
+                        width: 40, 
+                        height: 40,
+                        child: Icon(Icons.add, color: Colors.white, size: 24),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           );
         },
       );
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center, 
         children: [
-          Text('Services at:', style: Theme.of(context).textTheme.labelLarge),
-          Text(stationName, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text(stationAddress, style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: 16),
-          const Divider(),
-          const SizedBox(height: 8),
-          Text('Available Services', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center, 
+              children: [
+                Text(
+                  'Services at:', 
+                  style: theme.textTheme.labelLarge,
+                  textAlign: TextAlign.center, 
+                ),
+                Text(
+                  stationName, 
+                  style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  stationAddress, 
+                  style: theme.textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+          Divider(
+            indent: 16, 
+            endIndent: 16, 
+            height: 1,
+            color: theme.dividerColor, // Explicitly set divider color
+          ), 
           servicesContent,
         ],
       ),
