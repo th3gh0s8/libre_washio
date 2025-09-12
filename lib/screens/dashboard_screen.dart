@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'edit_profile_screen.dart'; 
 import 'map_selection_screen.dart'; 
+import './services_screen.dart'; // Added import for the new ServicesScreen file
 
 // --- AppShell Widget (Manages Bottom Navigation) ---
 class AppShell extends StatefulWidget {
@@ -37,10 +38,11 @@ class _AppShellState extends State<AppShell> {
 
   void _initializeScreens() {
     _screens = [
-      DashboardScreen(userData: _currentActionUserData), // Home
-      const BrowseScreen(), // Browse
-      const OrdersScreen(), // Orders
-      EditProfileScreen( // Account
+      DashboardScreen(userData: _currentActionUserData), // Home (Index 0)
+      const ServicesScreen(), // Services (Index 1) - Now imported
+      const BrowseScreen(), // Browse (Index 2)
+      const OrdersScreen(), // Orders (Index 3)
+      EditProfileScreen( // Account (Index 4)
         userData: _currentActionUserData, 
         onUserDataUpdated: _handleUserDataUpdateFromProfile,
       ),
@@ -72,6 +74,10 @@ class _AppShellState extends State<AppShell> {
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.miscellaneous_services),
+            label: 'Services',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.search),
@@ -110,18 +116,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _selectedAddress; 
 
   Future<void> _navigateToMapAndGetAddress() async {
-    // Extract user ID from userData - assuming key is 'id' and it might be int or String
     dynamic rawUserId = widget.userData['id'];
-    int userId = 0; // Default or error value
+    int userId = 0; 
     if (rawUserId is int) {
       userId = rawUserId;
     } else if (rawUserId is String) {
       userId = int.tryParse(rawUserId) ?? 0;
     }
-    // TODO: Handle cases where userId might still be 0 (e.g., if 'id' is not in userData or parsing fails)
-    // For now, if userId is 0, the API might reject or save with a default user.
 
-    const String addressType = 'DisplayLocation'; // Specific type for dashboard location context
+    const String addressType = 'DisplayLocation';
 
     final result = await Navigator.push(
       context,
@@ -133,46 +136,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
 
-    // IMPORTANT: MapSelectionScreen now pops `true` on successful API save, or null/false otherwise.
-    // It no longer pops the address string directly.
-    // The logic to update _selectedAddress for display on the dashboard needs to be revisited.
     if (result == true) {
-      // This means an attempt to save the address was made.
-      // To update the display, you might need to fetch the latest 'DisplayLocation' 
-      // for this user from your backend, or have a way to get the address string back.
-      print("MapSelectionScreen indicated a save attempt for 'DisplayLocation' was successful.");
-      // For now, _selectedAddress will not be updated here.
-      // You could, for example, set a generic message or trigger a refresh.
-      // setState(() {
-      //  _selectedAddress = "Location updated (refresh to see)"; 
-      // });
+      debugPrint("MapSelectionScreen indicated a save attempt for 'DisplayLocation' was successful.");
     } else {
-      print("Map selection did not return a successful save confirmation. Result: $result");
+      debugPrint("Map selection did not return a successful save confirmation. Result: $result");
     }
   }
 
-  // NEW Helper function to shorten the address
   String _getShortenedAddress(String? fullAddress) {
     if (fullAddress == null || fullAddress.isEmpty) {
       return "Set your location";
     }
-
     const int maxLengthPreferred = 35; 
     if (fullAddress.length <= maxLengthPreferred) {
       return fullAddress;
     }
-
     List<String> parts = fullAddress.split(',');
-    
     if (parts.length >= 2) {
       String shortened = '${parts[0].trim()}, ${parts[1].trim()}';
       return shortened;
     }
-    
     if (parts.isNotEmpty) {
       return parts[0].trim();
     }
-    
     return fullAddress; 
   }
 
@@ -200,13 +186,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 overflow: TextOverflow.ellipsis, 
                 maxLines: 1,
-                softWrap: false, // Added softWrap
+                softWrap: false,
               ),
             ),
             const SizedBox(width: 4.0), 
             Icon(
               Icons.arrow_drop_down, 
-              color: theme.colorScheme.onSurface.withOpacity(0.7), // Corrected withOpacity usage
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
               size: 20
             ), 
           ],
@@ -248,7 +234,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// --- Placeholder Screens ---
+// --- Placeholder Screens (ServicesScreen has been moved to its own file) ---
+
 class BrowseScreen extends StatelessWidget {
   const BrowseScreen({Key? key}) : super(key: key);
 
@@ -256,7 +243,7 @@ class BrowseScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const SizedBox.shrink(),
+        title: const Text('Browse'),
         automaticallyImplyLeading: false,
       ),
       body: const Center(
@@ -273,7 +260,7 @@ class OrdersScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const SizedBox.shrink(),
+        title: const Text('My Orders'),
         automaticallyImplyLeading: false,
       ),
       body: const Center(
