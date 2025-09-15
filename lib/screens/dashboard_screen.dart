@@ -103,18 +103,17 @@ class _AppShellState extends State<AppShell> {
       ),
       floatingActionButton: Consumer<CartProvider>(
         builder: (context, cart, child) {
-          // Only show the button if there are items in the cart
           return cart.itemCount > 0
               ? Badge(
                   label: Text(cart.itemCount.toString()),
                   child: FloatingActionButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, '/cart');
+                      Navigator.pushNamed(context, '/cart', arguments: widget.userData['id'] as int);
                     },
                     child: const Icon(Icons.shopping_cart),
                   ),
                 )
-              : const SizedBox.shrink(); // Return an empty widget if cart is empty
+              : const SizedBox.shrink(); 
         },
       ),
     );

@@ -202,14 +202,19 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   child: InkWell(
                     onTap: () {
                       final cart = Provider.of<CartProvider>(context, listen: false);
-                      cart.addItem(service);
+                      // Create a new map with the service data and the station ID
+                      final itemToAdd = {
+                        ...service,
+                        'station_id': _selectedStation!['id'],
+                      };
+                      cart.addItem(itemToAdd);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('$serviceName added to cart'),
                           duration: const Duration(seconds: 2),
                           action: SnackBarAction(
                             label: 'UNDO',
-                            onPressed: () => cart.removeItem(service),
+                            onPressed: () => cart.removeItem(itemToAdd),
                           ),
                         ),
                       );
@@ -310,7 +315,6 @@ class _ServicesScreenState extends State<ServicesScreen> {
         ],
       ),
       body: isViewingStationDetails ? _buildSelectedStationServices() : _buildStationsList(),
-      // FLOATING ACTION BUTTON REMOVED FROM HERE
     );
   }
 }
