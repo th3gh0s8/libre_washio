@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../api.dart'; // Import ApiService
-import 'dashboard_screen.dart'; // This file now contains AppShell
+import '../api.dart';
+import 'dashboard_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
   final String phoneNumber;
@@ -18,12 +18,10 @@ class RegistrationScreen extends StatefulWidget {
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
-  // MODIFIED: Use separate controllers for first and last name
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
-  // New controllers for optional vehicle details
   final TextEditingController _vehicleNoController = TextEditingController();
   final TextEditingController _vehicleTypeController = TextEditingController();
   final TextEditingController _vehicleModelController = TextEditingController();
@@ -36,65 +34,53 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         _isLoading = true;
       });
 
-      // MODIFIED: Get first and last name and combine them
       String firstName = _firstNameController.text.trim();
       String lastName = _lastNameController.text.trim();
-      String fullName = '$firstName $lastName'.trim(); // Combine and trim any extra space if last name is empty
-      
+      String fullName = '\$firstName \$lastName'.trim();
       String email = _emailController.text.trim();
       String address = _addressController.text.trim();
-      // Get optional vehicle details
-      String? vehicleNo = _vehicleNoController.text.trim().isNotEmpty 
-                           ? _vehicleNoController.text.trim() 
-                           : null;
-      String? vehicleType = _vehicleTypeController.text.trim().isNotEmpty 
-                             ? _vehicleTypeController.text.trim() 
-                             : null;
-      String? vehicleModel = _vehicleModelController.text.trim().isNotEmpty 
-                              ? _vehicleModelController.text.trim() 
-                              : null;
-      
+      String vehicleNo = _vehicleNoController.text.trim();
+      String vehicleType = _vehicleTypeController.text.trim();
+      String vehicleModel = _vehicleModelController.text.trim();
+
       try {
         final response = await ApiService.registerUser(
-          name: fullName, // Send the combined full name
+          name: fullName,
           email: email,
           phone: widget.phoneNumber,
           countryCode: widget.countryCode,
           address: address.isNotEmpty ? address : null,
-          vehicleNo: vehicleNo,
-          vehicleType: vehicleType,
-          vehicleModel: vehicleModel,
+          vehicleNo: vehicleNo.isNotEmpty ? vehicleNo : null,
+          vehicleType: vehicleType.isNotEmpty ? vehicleType : null,
+          vehicleModel: vehicleModel.isNotEmpty ? vehicleModel : null,
         );
 
         if (mounted) {
           if (response['status'] == 'success') {
             Map<String, dynamic>? newUserData = response['user_data'] as Map<String, dynamic>?;
-
             if (newUserData != null) {
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => AppShell(
-                    userData: newUserData,
-                  ),
+                  builder: (context) => AppShell(userData: newUserData),
                 ),
                 (Route<dynamic> route) => false,
               );
             } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Registration successful, but user data was not returned. Please try logging in.')),
+               ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Registration successful, but no user data returned.')),
               );
             }
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(response['message'] ?? 'Registration failed. Please try again.')),
+              SnackBar(content: Text(response['message'] ?? 'Registration failed.')),
             );
           }
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('An error occurred: ${e.toString()}')),
+            SnackBar(content: Text('An error occurred: \${e.toString()}')),
           );
         }
       } finally {
@@ -109,7 +95,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   @override
   void dispose() {
-    // MODIFIED: Dispose new name controllers
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
@@ -133,13 +118,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Text(
-                'Registering for: ${widget.countryCode} ${widget.phoneNumber}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Text(
+                  'Registering for: \${widget.countryCode} \${widget.phoneNumber}',
+                  style: Theme.of(context).textTheme.titleMedium,
+                  textAlign: TextAlign.center,
+                ),
               ),
-              const SizedBox(height: 24),
-              // MODIFIED: First Name TextFormField
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _firstNameController,
                 decoration: const InputDecoration(
@@ -147,16 +134,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.person_outline),
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter your first name';
-                  }
-                  return null;
-                },
+                validator: (value) => (value == null || value.trim().isEmpty) ? 'Please enter your first name' : null,
                 textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 16),
-              // MODIFIED: Last Name TextFormField
               TextFormField(
                 controller: _lastNameController,
                 decoration: const InputDecoration(
@@ -164,14 +145,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.person_outline),
                 ),
-                // Last name can be optional depending on your requirements, adjust validator accordingly
-                validator: (value) {
-                  // Example: making last name optional
-                  // if (value == null || value.trim().isEmpty) {
-                  //   return 'Please enter your last name';
-                  // }
-                  return null; 
-                },
                 textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 16),
@@ -184,12 +157,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 ),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter your email address';
-                  }
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                    return 'Please enter a valid email address';
-                  }
+                  if (value == null || value.trim().isEmpty) return 'Please enter your email address';
+                  if (!RegExp(r'^[\\w-\\.+]+@([\\w-]+\\.)+[\\w-]{2,4}\$').hasMatch(value)) return 'Please enter a valid email address';
                   return null;
                 },
                 textInputAction: TextInputAction.next,
@@ -198,25 +167,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               TextFormField(
                 controller: _addressController,
                 decoration: const InputDecoration(
-                  labelText: 'Address (Optional)',
+                  labelText: 'Address',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.home),
+                  prefixIcon: Icon(Icons.home_outlined),
                 ),
                 textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 24),
-              Text(
-                'Vehicle Details (Optional)',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
+              Text('Vehicle Details', style: Theme.of(context).textTheme.titleLarge, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _vehicleNoController,
                 decoration: const InputDecoration(
-                  labelText: 'Vehicle Number (Optional)',
-                  hintText: 'e.g., ABC-1234',
+                  labelText: 'Vehicle Number',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.directions_car_filled_outlined),
+                  prefixIcon: Icon(Icons.pin_outlined),
                 ),
                 textInputAction: TextInputAction.next,
               ),
@@ -224,10 +189,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               TextFormField(
                 controller: _vehicleTypeController,
                 decoration: const InputDecoration(
-                  labelText: 'Vehicle Type (Optional)',
+                  labelText: 'Vehicle Type',
                   hintText: 'e.g., Car, Bike, Van',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.two_wheeler_outlined),
+                  prefixIcon: Icon(Icons.directions_car_filled_outlined),
                 ),
                 textInputAction: TextInputAction.next,
               ),
@@ -235,33 +200,23 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               TextFormField(
                 controller: _vehicleModelController,
                 decoration: const InputDecoration(
-                  labelText: 'Vehicle Model (Optional)',
-                  hintText: 'e.g., Toyota Corolla, Honda CB Shine',
+                  labelText: 'Vehicle Model',
+                  hintText: 'e.g., Toyota Corolla, Honda Activa',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.branding_watermark_outlined),
+                  prefixIcon: Icon(Icons.star_outline),
                 ),
                 textInputAction: TextInputAction.done,
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  backgroundColor: Colors.blue,
                   minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 5,
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: _isLoading ? null : _registerUser,
                 child: _isLoading
                     ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white))
-                    : const Text('Complete Registration'),
+                    : const Text('Complete Registration', style: TextStyle(fontSize: 16)),
               ),
             ],
           ),
