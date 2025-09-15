@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; 
-import 'theme_provider.dart';         
+import 'theme_provider.dart';
+import 'cart_provider.dart';
 import 'screens/welcome_screen.dart';
-// Ensure you are consistently using the VerificationScreen from lib/screens/
-// import 'screens/verification_screen.dart'; 
+import 'screens/cart_screen.dart'; // <<< IMPORT CART SCREEN
 
 void main() async { 
   WidgetsFlutterBinding.ensureInitialized(); 
   runApp(
-    ChangeNotifierProvider( 
-      create: (_) => ThemeProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+      ],
       child: const MyApp(),
     ),
   );
@@ -54,7 +57,7 @@ class MyApp extends StatelessWidget {
           onError: Colors.black,         
           error: Colors.redAccent[100]!, 
         ),
-        cardTheme: CardThemeData( // <<< CORRECTED TO CardThemeData
+        cardTheme: CardThemeData(
           color: const Color(0xFF1E1E1E),      
           elevation: 2.0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -95,6 +98,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const WelcomeScreen(),
+        '/cart': (context) => const CartScreen(), // <<< ADDED CART ROUTE
         '/verification': (context) {
           final Object? args = ModalRoute.of(context)!.settings.arguments;
           final String phoneNumber = (args is String) ? args : ""; 
