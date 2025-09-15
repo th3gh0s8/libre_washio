@@ -310,20 +310,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
         ],
       ),
       body: isViewingStationDetails ? _buildSelectedStationServices() : _buildStationsList(),
-      floatingActionButton: isViewingStationDetails 
-          ? Consumer<CartProvider>(
-              builder: (context, cart, child) => Badge(
-                label: Text(cart.itemCount.toString()),
-                isLabelVisible: cart.itemCount > 0,
-                child: FloatingActionButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/cart');
-                  },
-                  child: const Icon(Icons.shopping_cart),
-                ),
-              ),
-            )
-          : null,
+      // FLOATING ACTION BUTTON REMOVED FROM HERE
     );
   }
 }
