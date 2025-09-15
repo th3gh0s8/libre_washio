@@ -102,16 +102,20 @@ class _AppShellState extends State<AppShell> {
         type: BottomNavigationBarType.fixed, 
       ),
       floatingActionButton: Consumer<CartProvider>(
-        builder: (context, cart, child) => Badge(
-          label: Text(cart.itemCount.toString()),
-          isLabelVisible: cart.itemCount > 0,
-          child: FloatingActionButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/cart');
-            },
-            child: const Icon(Icons.shopping_cart),
-          ),
-        ),
+        builder: (context, cart, child) {
+          // Only show the button if there are items in the cart
+          return cart.itemCount > 0
+              ? Badge(
+                  label: Text(cart.itemCount.toString()),
+                  child: FloatingActionButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/cart');
+                    },
+                    child: const Icon(Icons.shopping_cart),
+                  ),
+                )
+              : const SizedBox.shrink(); // Return an empty widget if cart is empty
+        },
       ),
     );
   }
