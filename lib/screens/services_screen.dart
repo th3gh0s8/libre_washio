@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-// import 'package:intl/intl.dart'; // Removed as no longer used for date formatting
-import '../api.dart'; // Import ApiService
+import 'package:provider/provider.dart';
+import '../api.dart';
+import '../cart_provider.dart';
+import './cart_screen.dart';
 
 class ServicesScreen extends StatefulWidget {
   const ServicesScreen({Key? key}) : super(key: key);
@@ -32,7 +34,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
     setState(() {
       _isLoadingStations = true;
       _stationError = null;
-      _selectedStation = null; // Clear selected station on refresh
+      _selectedStation = null; 
       _servicesForSelectedStation = [];
     });
 
@@ -199,8 +201,18 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () {
-                      // TODO: Implement add to cart or service selection logic
-                      print('Add button tapped for $serviceName');
+                      final cart = Provider.of<CartProvider>(context, listen: false);
+                      cart.addItem(service);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('$serviceName added to cart'),
+                          duration: const Duration(seconds: 2),
+                          action: SnackBarAction(
+                            label: 'UNDO',
+                            onPressed: () => cart.removeItem(service),
+                          ),
+                        ),
+                      );
                     },
                     borderRadius: BorderRadius.circular(20), 
                     child: Ink(
@@ -279,7 +291,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: null, // Corrected: Let automaticallyImplyLeading handle it
+        leading: null, 
         title: Text(isViewingStationDetails ? '' : 'Service Stations'), 
         automaticallyImplyLeading: !isViewingStationDetails, 
         actions: [
@@ -289,16 +301,29 @@ class _ServicesScreenState extends State<ServicesScreen> {
               onPressed: _isLoadingStations ? null : _fetchStations,
               tooltip: 'Refresh Stations',
             ),
-          // Return button for station details view, if needed outside AppBar
           if (isViewingStationDetails)
             IconButton(
-              icon: const Icon(Icons.close), // Or Icons.arrow_back if preferred
+              icon: const Icon(Icons.close), 
               onPressed: _clearSelectedStation,
               tooltip: 'Back to stations list',
             ),
         ],
       ),
       body: isViewingStationDetails ? _buildSelectedStationServices() : _buildStationsList(),
+      floatingActionButton: isViewingStationDetails 
+          ? Consumer<CartProvider>(
+              builder: (context, cart, child) => Badge(
+                label: Text(cart.itemCount.toString()),
+                isLabelVisible: cart.itemCount > 0,
+                child: FloatingActionButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/cart');
+                  },
+                  child: const Icon(Icons.shopping_cart),
+                ),
+              ),
+            )
+          : null,
     );
   }
 }
