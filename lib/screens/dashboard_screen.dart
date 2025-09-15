@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../cart_provider.dart';
+import './cart_screen.dart';
 import 'edit_profile_screen.dart'; 
 import 'map_selection_screen.dart'; 
-import './services_screen.dart'; // Added import for the new ServicesScreen file
+import './services_screen.dart';
 
 // --- AppShell Widget (Manages Bottom Navigation) ---
 class AppShell extends StatefulWidget {
@@ -97,6 +100,18 @@ class _AppShellState extends State<AppShell> {
         unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed, 
+      ),
+      floatingActionButton: Consumer<CartProvider>(
+        builder: (context, cart, child) => Badge(
+          label: Text(cart.itemCount.toString()),
+          isLabelVisible: cart.itemCount > 0,
+          child: FloatingActionButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/cart');
+            },
+            child: const Icon(Icons.shopping_cart),
+          ),
+        ),
       ),
     );
   }
