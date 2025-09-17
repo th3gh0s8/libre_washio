@@ -36,7 +36,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
       String firstName = _firstNameController.text.trim();
       String lastName = _lastNameController.text.trim();
-      String fullName = '${widget.countryCode} ${widget.phoneNumber}'.trim();
+      //String fullName = '${widget.countryCode} ${widget.phoneNumber}'.trim();
+      String fullName = '$firstName $lastName'.trim();
       String email = _emailController.text.trim();
       String address = _addressController.text.trim();
       String vehicleNo = _vehicleNoController.text.trim();
@@ -158,7 +159,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) return 'Please enter your email address';
-                  if (!RegExp(r'^[\\w-\\.+]+@([\\w-]+\\.)+[\\w-]{2,4}\$').hasMatch(value)) return 'Please enter a valid email address';
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) return 'Please enter a valid email address';
                   return null;
                 },
                 textInputAction: TextInputAction.next,
