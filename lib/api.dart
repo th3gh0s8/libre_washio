@@ -306,4 +306,28 @@ class ApiService {
       throw Exception('Error fetching services for station $stationId: $e');
     }
   }
+
+  static Future<List<Map<String, dynamic>>> getUserOrders(int userId) async {
+    final url = Uri.parse('${baseUrl}get_orders.php?user_id=$userId');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final decodedResponse = jsonDecode(response.body) as Map<String, dynamic>;
+        if (decodedResponse['status'] == 'success') {
+          if (decodedResponse['data'] != null) {
+            final List<dynamic> orderDataList = decodedResponse['data'] as List<dynamic>;
+            return orderDataList.map((orderData) => orderData as Map<String, dynamic>).toList();
+          } else {
+            return [];
+          }
+        } else {
+          throw Exception('Failed to load orders: ${decodedResponse['message']}');
+        }
+      } else {
+        throw Exception('Failed to load orders. Status code: ${response.statusCode}, Body: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching orders: $e');
+    }
+  }
 }

@@ -5,6 +5,7 @@ import './cart_screen.dart';
 import 'edit_profile_screen.dart'; 
 import 'map_selection_screen.dart'; 
 import './services_screen.dart';
+import './orders_screen.dart';
 
 // --- AppShell Widget (Manages Bottom Navigation) ---
 class AppShell extends StatefulWidget {
@@ -44,7 +45,7 @@ class _AppShellState extends State<AppShell> {
       DashboardScreen(userData: _currentActionUserData), // Home (Index 0)
       const ServicesScreen(), // Services (Index 1) - Now imported
       const BrowseScreen(), // Browse (Index 2)
-      const OrdersScreen(), // Orders (Index 3)
+      OrdersScreen(userId: widget.userData['id'] as int), // Orders (Index 3)
       EditProfileScreen( // Account (Index 4)
         userData: _currentActionUserData, 
         onUserDataUpdated: _handleUserDataUpdateFromProfile,
@@ -266,23 +267,6 @@ class BrowseScreen extends StatelessWidget {
       ),
       body: const Center(
         child: Text('Browse Screen - Coming Soon!', style: TextStyle(fontSize: 18)),
-      ),
-    );
-  }
-}
-
-class OrdersScreen extends StatelessWidget {
-  const OrdersScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Orders'),
-        automaticallyImplyLeading: false,
-      ),
-      body: const Center(
-        child: Text('Orders Screen - Coming Soon!', style: TextStyle(fontSize: 18)),
       ),
     );
   }
