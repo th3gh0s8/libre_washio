@@ -19,6 +19,7 @@ $link = mysqli_init();
 if (!$link) {
     $db_connection_error_message = 'mysqli_init failed';
     error_log("Database Connection failed in db.php: mysqli_init failed");
+    throw new Exception($db_connection_error_message);
 } else {
     // Set connection timeout to 5 seconds
     if (!mysqli_options($link, MYSQLI_OPT_CONNECT_TIMEOUT, 5)) {
@@ -33,22 +34,8 @@ if (!$link) {
         // @ suppresses PHP warning for connection, we handle it via mysqli_connect_error()
         $db_connection_error_message = mysqli_connect_error(); // Get connection error
         error_log("Database Connection failed in db.php (mysqli_real_connect): " . $db_connection_error_message . " (Details: Server=$servername, User=$username, DB=$dbname, Port=$port)");
+        throw new Exception($db_connection_error_message);
     }
-}
-
-// Check connection (either $conn is null if init/real_connect failed, or $conn->connect_error might be set by mysqli if link was made but then error occurred)
-// Note: mysqli_connect_error() is preferred for procedural style after mysqli_real_connect failure.
-if (!$conn) { // This condition is met if mysqli_init failed or mysqli_real_connect returned false
-    ob_end_clean(); // Clean any previous buffer
-    if (!headers_sent()) {
-        header('Content-Type: application/json');
-    }
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'PHP: Database connection failed. Check server logs.',
-        'db_error_message' => $db_connection_error_message 
-    ]);
-    exit; // Stop script execution if connection fails
 }
 
 // If $conn is not null, it means mysqli_real_connect succeeded and $conn is the link resource
