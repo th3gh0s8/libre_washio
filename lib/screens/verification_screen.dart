@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:async';
 import '../api.dart'; 
-import 'dashboard_screen.dart'; // This file now contains AppShell
-import 'registration_screen.dart'; 
+import 'registration_screen.dart';
+import 'dashboard_screen.dart';
 
 class VerificationScreen extends StatefulWidget {
-  final String phoneNumber; 
-  final String countryCode; 
-  final String countryName;
-  final String otpPurpose; 
+  final String phoneNumber;
+  final String countryCode;
+  final String otpPurpose; // 'login' or 'registration'
 
   const VerificationScreen({
     Key? key,
     required this.phoneNumber,
     required this.countryCode,
-    required this.countryName,
-    required this.otpPurpose, 
+    required this.otpPurpose,
   }) : super(key: key);
 
   @override
@@ -23,31 +22,47 @@ class VerificationScreen extends StatefulWidget {
 }
 
 class _VerificationScreenState extends State<VerificationScreen> {
-  final List<TextEditingController> _codeControllers =
-      List.generate(6, (index) => TextEditingController());
-  final List<FocusNode> _focusNodes = 
-      List.generate(6, (index) => FocusNode());
+  final List<TextEditingController> _otpControllers = List.generate(4, (_) => TextEditingController());
+  final List<FocusNode> _otpFocusNodes = List.generate(4, (_) => FocusNode());
   bool _isLoading = false;
+  int _resendTimer = 60;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-         FocusScope.of(context).requestFocus(_focusNodes[0]);
+    _startResendTimer();
+    for (int i = 0; i < 4; i++) {
+      _otpControllers[i].addListener(() {
+        if (_otpControllers[i].text.length == 1 && i < 3) {
+          FocusScope.of(context).requestFocus(_otpFocusNodes[i + 1]);
         }
+      });
+    }
+  }
+
+  void _startResendTimer() {
+    _timer?.cancel(); // Cancel any existing timer
+    _resendTimer = 60;
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_resendTimer > 0) {
+        setState(() {
+          _resendTimer--;
+        });
+      } else {
+        _timer?.cancel();
+      }
     });
   }
 
-  Future<void> _verifyCode() async {
-    String otp = _codeControllers.map((controller) => controller.text).join();
-    
-    if (otp.length != 6) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a valid 6-digit code.')),
-        );
-      }
+  Future<void> _verifyOtp() async {
+    if (_isLoading) return;
+
+    final otp = _otpControllers.map((c) => c.text).join();
+    if (otp.length != 4) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter the complete 4-digit code.')),
+      );
       return;
     }
 
@@ -56,36 +71,19 @@ class _VerificationScreenState extends State<VerificationScreen> {
     });
 
     try {
-      final response = await ApiService.verifyOtp(widget.countryCode, widget.phoneNumber, otp, widget.otpPurpose); 
+      final response = await ApiService.verifyOtp(widget.phoneNumber, widget.countryCode, otp);
 
       if (mounted) {
         if (response['status'] == 'success') {
-          bool userExists = response['user_exists'] ?? false;
-          Map<String, dynamic>? userData = response['user_data'] as Map<String, dynamic>?;
-
-          if (userExists && userData != null) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(
-                builder: (context) => AppShell( 
-                  userData: userData, 
-                ),
-              ),
-              (Route<dynamic> route) => false, 
-            );
-          } else if (userExists && userData == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('User exists but data is missing. Please try again.')),
-            );
-            // Reset focus and clear fields on error too if needed, similar to wrong OTP
-            for (var controller in _codeControllers) {
-              controller.clear();
-            }
-            if (_focusNodes.isNotEmpty) {
-              FocusScope.of(context).requestFocus(_focusNodes[0]);
-            }
-          } else {
-            Navigator.pushReplacement(
+          if (widget.otpPurpose == 'login' && response.containsKey('user_data')) {
+             Map<String, dynamic> userData = response['user_data'];
+             Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => AppShell(userData: userData)),
+                (Route<dynamic> route) => false,
+              );
+          } else if (widget.otpPurpose == 'registration') {
+            Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => RegistrationScreen(
@@ -94,18 +92,15 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 ),
               ),
             );
+          } else {
+             ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Verification successful, but action is unclear.')),
+            );
           }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response['message'] ?? 'Invalid OTP. Please try again.')),
+            SnackBar(content: Text(response['message'] ?? 'Invalid OTP or an error occurred.')),
           );
-          // Clear fields and reset focus for incorrect OTP
-          for (var controller in _codeControllers) {
-            controller.clear();
-          }
-          if (_focusNodes.isNotEmpty) { 
-            FocusScope.of(context).requestFocus(_focusNodes[0]);
-          }
         }
       }
     } catch (e) {
@@ -113,13 +108,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('An error occurred: ${e.toString()}')),
         );
-        // Optionally, clear fields and reset focus on general error too
-        for (var controller in _codeControllers) {
-            controller.clear();
-        }
-        if (_focusNodes.isNotEmpty) {
-            FocusScope.of(context).requestFocus(_focusNodes[0]);
-        }
       }
     } finally {
       if (mounted) {
@@ -130,67 +118,30 @@ class _VerificationScreenState extends State<VerificationScreen> {
     }
   }
 
- @override
-  void dispose() {
-    for (var controller in _codeControllers) {
-      controller.dispose();
-    }
-    for (var node in _focusNodes) {
-      node.dispose();
-    }
-    super.dispose();
-  }
-
-  Widget _buildOtpTextField(int index) {
-    return SizedBox(
-      width: 45,
-      child: TextField(
-        controller: _codeControllers[index],
-        focusNode: _focusNodes[index],
-        keyboardType: TextInputType.number,
-        textAlign: TextAlign.center,
-        maxLength: 1,
-        decoration: const InputDecoration(
-          border: OutlineInputBorder(),
-          counterText: '',
-        ),
-        onChanged: (value) {
-          if (value.isNotEmpty) {
-            if (index < 5) { 
-              FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
-            } else {
-              _focusNodes[index].unfocus(); 
-              if (_codeControllers.every((controller) => controller.text.isNotEmpty)) {
-                 _verifyCode();
-              }
-            }
-          }
-        },
-      ),
-    );
-  }
-
   Future<void> _resendOtp() async {
+    if (_resendTimer > 0) return;
+
     setState(() {
-      _isLoading = true; 
+      _isLoading = true; // Show loading indicator while resending
     });
+
     try {
-      final Map<String, dynamic> newOtpResponse = await ApiService.requestOtp(widget.phoneNumber, widget.countryCode);
+      final response = await ApiService.requestOtp(widget.phoneNumber, widget.countryCode);
       if (mounted) {
-        if (newOtpResponse['status'] == 'success') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('A new OTP has been sent to your phone number. Please check your messages.')), 
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(newOtpResponse['message'] ?? 'Failed to resend OTP. Please try again.')),
-          );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response['message'] ?? 'OTP resent successfully.'),
+            backgroundColor: response['status'] == 'success' ? Colors.green : Colors.red,
+          ),
+        );
+        if (response['status'] == 'success') {
+          _startResendTimer(); // Restart timer on success
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to resend OTP: ${e.toString()}')),
+          SnackBar(content: Text('Failed to resend OTP: ${e.toString()}'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -200,6 +151,19 @@ class _VerificationScreenState extends State<VerificationScreen> {
         });
       }
     }
+  }
+
+
+  @override
+  void dispose() {
+    for (var controller in _otpControllers) {
+      controller.dispose();
+    }
+    for (var focusNode in _otpFocusNodes) {
+      focusNode.dispose();
+    }
+    _timer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -208,62 +172,61 @@ class _VerificationScreenState extends State<VerificationScreen> {
       appBar: AppBar(
         title: const Text('Enter Verification Code'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            const SizedBox(height: 30),
             Text(
-              'Enter the 6-digit code sent to ${widget.countryCode}${widget.phoneNumber}. Purpose: ${widget.otpPurpose}', 
-              style: const TextStyle(fontSize: 16),
+              'We have sent a 4-digit code to\n${widget.countryCode} ${widget.phoneNumber}',
               textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 30),
-            RawKeyboardListener(
-              focusNode: FocusNode(), 
-              onKey: (RawKeyEvent event) {
-                if (event is RawKeyDownEvent && event.logicalKey == LogicalKeyboardKey.backspace) {
-                  for (int i = 0; i < 6; i++) {
-                    if (_focusNodes[i].hasFocus) {
-                      if (_codeControllers[i].text.isEmpty && i > 0) {
-                        FocusScope.of(context).requestFocus(_focusNodes[i - 1]);
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: List.generate(4, (index) {
+                return SizedBox(
+                  width: 50,
+                  child: TextFormField(
+                    controller: _otpControllers[index],
+                    focusNode: _otpFocusNodes[index],
+                    textAlign: TextAlign.center,
+                    keyboardType: TextInputType.number,
+                    maxLength: 1,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: const InputDecoration(
+                      counterText: ''
+                    ),
+                    onChanged: (value) {
+                      if (value.length == 1 && index < 3) {
+                        _otpFocusNodes[index + 1].requestFocus();
+                      } else if (value.isEmpty && index > 0) {
+                        _otpFocusNodes[index - 1].requestFocus();
                       }
-                      break; 
-                    }
-                  }
-                }
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(6, (index) => _buildOtpTextField(index)),
-              ),
+                    },
+                  ),
+                );
+              }),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 40),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,               
-                backgroundColor: Colors.blue,                
-                minimumSize: const Size(double.infinity, 50), 
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10), 
-                ),
-                elevation: 5,                                
-                textStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 10), 
-              ),
-              onPressed: _isLoading ? null : _verifyCode,
-              child: _isLoading 
-                  ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white)) 
-                  : const Text('Verify & Continue'),
+              onPressed: _isLoading ? null : _verifyOtp,
+              child: _isLoading
+                  ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white))
+                  : const Text('Verify'),
             ),
             const SizedBox(height: 20),
             TextButton(
-              onPressed: _isLoading ? null : _resendOtp,
-              child: const Text('Resend OTP'),
-            )
+              onPressed: _resendTimer == 0 ? _resendOtp : null,
+              child: Text(
+                _resendTimer > 0
+                    ? 'Resend code in $_resendTimer seconds'
+                    : 'Resend Code',
+              ),
+            ),
           ],
         ),
       ),

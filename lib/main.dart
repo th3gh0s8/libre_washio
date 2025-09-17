@@ -102,73 +102,11 @@ class MyApp extends StatelessWidget {
           final userId = ModalRoute.of(context)!.settings.arguments as int;
           return CartScreen(userId: userId);
         },
-        '/verification': (context) {
-          final Object? args = ModalRoute.of(context)!.settings.arguments;
-          final String phoneNumber = (args is String) ? args : ""; 
-          return VerificationScreenLocal(phoneNumber: phoneNumber);
-        }
+        // REMOVED old /verification route
       },
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
-class VerificationScreenLocal extends StatelessWidget {
-  final String phoneNumber;
-
-  const VerificationScreenLocal({Key? key, required this.phoneNumber}) : super(key: key); 
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Verification'), 
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.signal_cellular_4_bar), 
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.battery_full), 
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Enter the 4-digit code sent via SMS at $phoneNumber.',
-              style: const TextStyle(fontSize: 18), 
-            ),
-            const SizedBox(height: 20),
-            const Text('Changed your mobile number?'), 
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(4, (index) => 
-              SizedBox( 
-                width: 50,
-                child: const TextField( 
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                onPressed: () {},
-                child: const Text('Resend code by SMS'), 
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// REMOVED unnecessary VerificationScreenLocal widget
