@@ -19,7 +19,6 @@ class ActualEditProfileFormScreen extends StatefulWidget {
 class _ActualEditProfileFormScreenState
     extends State<ActualEditProfileFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  // MODIFIED: Controllers for first and last name
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
   late TextEditingController _emailController;
@@ -32,7 +31,6 @@ class _ActualEditProfileFormScreenState
     super.initState();
     _userId = widget.initialUserData['id'] as int?;
 
-    // Split initial full name into first and last names
     String initialFullName = widget.initialUserData['name']?.toString() ?? '';
     String initialFirstName = '';
     String initialLastName = '';
@@ -65,7 +63,6 @@ class _ActualEditProfileFormScreenState
         _isLoading = true;
       });
 
-      // MODIFIED: Combine first and last name to full name for API
       String firstName = _firstNameController.text.trim();
       String lastName = _lastNameController.text.trim();
       String fullName = '$firstName $lastName'.trim();
@@ -73,22 +70,21 @@ class _ActualEditProfileFormScreenState
       try {
         final response = await ApiService.updateUserDetails(
           userId: _userId!,
-          name: fullName, // Send combined full name
+          name: fullName, 
           email: _emailController.text.trim(),
           address: _addressController.text.trim().isNotEmpty ? _addressController.text.trim() : null,
         );
+        
+        // <<< DEBUG PRINT >>>
+        print("Server Response: $response");
 
         if (mounted) {
           if (response['status'] == 'success') {
             Map<String, dynamic> updatedUserDataFromResponse =
                 response['user_data'] as Map<String, dynamic>? ?? {};
             
-            // Ensure the local data is updated with what the server returns
-            // including the combined name if the server provides it back directly
-            // or construct it if only first/last are returned (though our PHP sends combined)
             Map<String, dynamic> finalUpdatedUserData = Map.from(widget.initialUserData);
             finalUpdatedUserData.addAll(updatedUserDataFromResponse);
-             // Ensure the 'name' field in finalUpdatedUserData is the combined one
             finalUpdatedUserData['name'] = fullName; 
 
             ScaffoldMessenger.of(context).showSnackBar(
@@ -97,7 +93,7 @@ class _ActualEditProfileFormScreenState
             
             widget.onUserDataUpdated?.call(finalUpdatedUserData);
             
-            Navigator.pop(context, finalUpdatedUserData); // Pop back to Account screen
+            Navigator.pop(context, finalUpdatedUserData);
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(response['message'] ?? 'Failed to update profile.')),
@@ -122,7 +118,6 @@ class _ActualEditProfileFormScreenState
 
   @override
   void dispose() {
-    // MODIFIED: Dispose new name controllers
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
@@ -158,7 +153,6 @@ class _ActualEditProfileFormScreenState
                     textAlign: TextAlign.start,
                   ),
                 ),
-              // MODIFIED: First Name TextFormField
               TextFormField(
                 controller: _firstNameController,
                 decoration: const InputDecoration(
@@ -175,7 +169,6 @@ class _ActualEditProfileFormScreenState
                 textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 16),
-              // MODIFIED: Last Name TextFormField
               TextFormField(
                 controller: _lastNameController,
                 decoration: const InputDecoration(
@@ -183,11 +176,7 @@ class _ActualEditProfileFormScreenState
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.person_outline),
                 ),
-                // Last name can be optional, adjust validator if needed
                 validator: (value) {
-                  // if (value == null || value.trim().isEmpty) {
-                  //   return 'Please enter your last name';
-                  // }
                   return null;
                 },
                 textInputAction: TextInputAction.next,
