@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../api.dart';
+import './order_details_screen.dart'; // Import the new screen
 
 class OrdersScreen extends StatefulWidget {
   final int userId;
@@ -25,6 +26,19 @@ class _OrdersScreenState extends State<OrdersScreen> {
     });
   }
 
+  // Function to navigate to the details screen
+  void _navigateToDetails(String orderId, String stationName) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OrderDetailsScreen(
+          orderId: orderId,
+          stationName: stationName,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,38 +59,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            // A more user-friendly error screen
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline, color: Colors.red, size: 60),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Failed to Load Orders',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'There was a problem fetching your order history. Please check your connection and try again.',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    // For debugging, we can log the actual error.
-                    // The user sees a clean message.
-                    // To see the full error, you can uncomment the below block.
-                    const SizedBox(height: 20),
-                    SingleChildScrollView(
-                      child: Text(
-                        snapshot.error.toString(),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12),
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  'Error loading orders: ${snapshot.error}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ),
             );
@@ -95,7 +84,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final order = orders[index];
-              // These keys now match the corrected PHP script
               final orderId = order['order_id']?.toString() ?? 'N/A';
               final stationName = order['station_name']?.toString() ?? 'Unknown Station';
               final orderDate = order['order_date']?.toString() ?? 'Unknown Date';
@@ -126,6 +114,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       color: Theme.of(context).primaryColor,
                     ),
                   ),
+                  onTap: () => _navigateToDetails(orderId, stationName), // Make the ListTile tappable
                 ),
               );
             },

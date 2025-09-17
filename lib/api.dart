@@ -239,7 +239,7 @@ class ApiService {
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        headers: {'Content-Type': 'application/x-w<|file_separator|>ww-form-urlencoded'},
         body: {
           'user_id': userId.toString(),
           'name': name,
@@ -328,6 +328,30 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error fetching orders: $e');
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getOrderDetails(int orderId) async {
+    final url = Uri.parse('${baseUrl}get_order_details.php?order_id=$orderId');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final decodedResponse = jsonDecode(response.body) as Map<String, dynamic>;
+        if (decodedResponse['status'] == 'success') {
+          if (decodedResponse['data'] != null) {
+            final List<dynamic> itemDataList = decodedResponse['data'] as List<dynamic>;
+            return itemDataList.map((itemData) => itemData as Map<String, dynamic>).toList();
+          } else {
+            return [];
+          }
+        } else {
+          throw Exception('Failed to load order details: ${decodedResponse['message']}');
+        }
+      } else {
+        throw Exception('Failed to load order details. Status code: ${response.statusCode}, Body: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching order details: $e');
     }
   }
 }
