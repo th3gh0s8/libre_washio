@@ -36,7 +36,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
       String firstName = _firstNameController.text.trim();
       String lastName = _lastNameController.text.trim();
-      //String fullName = '${widget.countryCode} ${widget.phoneNumber}'.trim();
       String fullName = '$firstName $lastName'.trim();
       String email = _emailController.text.trim();
       String address = _addressController.text.trim();
