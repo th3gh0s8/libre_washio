@@ -36,7 +36,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
       String firstName = _firstNameController.text.trim();
       String lastName = _lastNameController.text.trim();
-      String fullName = '\$firstName \$lastName'.trim();
+      String fullName = '$firstName $lastName'.trim();
       String email = _emailController.text.trim();
       String address = _addressController.text.trim();
       String vehicleNo = _vehicleNoController.text.trim();
@@ -80,7 +80,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('An error occurred: \${e.toString()}')),
+            SnackBar(content: Text('An error occurred: ${e.toString()}')),
           );
         }
       } finally {
@@ -121,7 +121,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: Text(
-                  'Registering for: \${widget.countryCode} \${widget.phoneNumber}',
+                  'Registering for: ${widget.countryCode} ${widget.phoneNumber}',
                   style: Theme.of(context).textTheme.titleMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -158,7 +158,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) return 'Please enter your email address';
-                  if (!RegExp(r'^[\\w-\\.+]+@([\\w-]+\\.)+[\\w-]{2,4}\$').hasMatch(value)) return 'Please enter a valid email address';
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) return 'Please enter a valid email address';
                   return null;
                 },
                 textInputAction: TextInputAction.next,
