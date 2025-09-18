@@ -21,16 +21,17 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    // Convert orderId to int for the API call
     final int orderIdInt = int.tryParse(widget.orderId) ?? 0;
     _orderDetailsFuture = ApiService.getOrderDetails(orderIdInt);
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Order #${widget.orderId}'),
+        title: Text('Order Details'),
         centerTitle: true,
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
@@ -39,98 +40,172 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  'Error loading order details: ${snapshot.error}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-              ),
-            );
+            return _buildErrorState(theme, snapshot.error);
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(
-              child: Text(
-                'No items found for this order.',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-              ),
-            );
+            return _buildEmptyState(theme);
           }
 
           final items = snapshot.data!;
-          final theme = Theme.of(context);
-
-          // Calculate the total amount from the items fetched
           final double totalAmount = items.fold(0.0, (sum, item) {
             final price = double.tryParse(item['price']?.toString() ?? '0.0') ?? 0.0;
             final quantity = int.tryParse(item['item_quantity']?.toString() ?? '1') ?? 1;
             return sum + (price * quantity);
           });
 
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Order from ${widget.stationName}',
-                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Items Ordered',
-                      style: theme.textTheme.titleLarge,
-                    ),
-                  ],
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(theme),
+                const SizedBox(height: 24),
+                Text(
+                  'Order Summary',
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    final itemName = item['item']?.toString() ?? 'Unknown Item';
-                    final itemPrice = double.tryParse(item['price']?.toString() ?? '0.0') ?? 0.0;
-                    final quantity = int.tryParse(item['item_quantity']?.toString() ?? '1') ?? 1;
-
-                    return ListTile(
-                      title: Text(itemName, style: const TextStyle(fontWeight: FontWeight.w500)),
-                      subtitle: Text('Quantity: $quantity'),
-                      trailing: Text(
-                        '\$${(itemPrice * quantity).toStringAsFixed(2)}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Total Paid:',
-                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      '\$${totalAmount.toStringAsFixed(2)}',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                _buildItemsCard(theme, items, totalAmount),
+              ],
+            ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildHeader(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+            child: Icon(Icons.storefront, color: theme.colorScheme.primary, size: 28),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.stationName,
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Order ID: #${widget.orderId}',
+                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemsCard(ThemeData theme, List<Map<String, dynamic>> items, double totalAmount) {
+    return Card(
+      elevation: 2.0,
+      shadowColor: theme.colorScheme.shadow.withOpacity(0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      child: Column(
+        children: [
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: items.length,
+            itemBuilder: (context, index) {
+              final item = items[index];
+              final itemName = item['item']?.toString() ?? 'Unknown Item';
+              final itemPrice = double.tryParse(item['price']?.toString() ?? '0.0') ?? 0.0;
+              final quantity = int.tryParse(item['item_quantity']?.toString() ?? '1') ?? 1;
+              return ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                title: Text(itemName, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
+                subtitle: Text('Quantity: $quantity'),
+                trailing: Text(
+                  '\$${(itemPrice * quantity).toStringAsFixed(2)}',
+                  style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              );
+            },
+            separatorBuilder: (context, index) => const Divider(height: 1, indent: 16, endIndent: 16),
+          ),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Total Paid', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                Text(
+                  '\$${totalAmount.toStringAsFixed(2)}',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(ThemeData theme, Object? error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.cloud_off, size: 80, color: Colors.grey[400]),
+            const SizedBox(height: 24),
+            Text(
+              'Load Failed',
+              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'We couldn\'t fetch the details for this order. Please check your connection and try again.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey[500]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(ThemeData theme) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 80, color: Colors.grey[400]),
+            const SizedBox(height: 24),
+            Text(
+              'No Details Found',
+              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'There are no items associated with this order number.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey[500]),
+            ),
+          ],
+        ),
       ),
     );
   }

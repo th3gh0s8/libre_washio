@@ -22,12 +22,13 @@ try {
         throw new Exception('Database connection object not found.');
     }
 
-    // CORRECTED QUERY: This now matches the database schema you provided.
+    // CORRECTED QUERY: This now matches the database schema you provided and includes order status.
     $query = "SELECT 
                 o.id AS order_id, 
                 st.name AS station_name, 
                 o.amount AS total_price, 
-                o.order_date_time AS order_date
+                o.order_date_time AS order_date,
+                o.status AS order_status
               FROM oder_tb o 
               JOIN stations st ON o.station_Tb = st.id 
               WHERE o.user_Tb = ? 
