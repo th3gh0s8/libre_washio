@@ -40,7 +40,7 @@ try {
         $orderId = $conn->insert_id;
         $orderStmt->close();
 
-        // Step 2: Insert each item into the oder_items table with all correct columns
+        // Step 2: Insert each item from the cart
         $itemStmt = $conn->prepare(
             "INSERT INTO oder_items (oderTb, userTb, stationTb, serviceTb, item, item_quantity, price) VALUES (?, ?, ?, ?, ?, ?, ?)"
         );
@@ -56,16 +56,31 @@ try {
                 throw new Exception("Invalid item data in cart.");
             }
             
-            // Bind all parameters according to the corrected table structure
             $itemStmt->bind_param("iiiisid", $orderId, $userId, $stationId, $serviceId, $itemName, $quantity, $price);
             if (!$itemStmt->execute()) throw new Exception("Execute failed for item $serviceId: " . $itemStmt->error);
         }
         $itemStmt->close();
 
+        // Step 3: Get the user-specific order count for the display ID
+        $countStmt = $conn->prepare("SELECT COUNT(*) as order_count FROM oder_tb WHERE user_Tb = ?");
+        if ($countStmt === false) throw new Exception("Prepare failed (count): " . $conn->error);
+        
+        $countStmt->bind_param("i", $userId);
+        if (!$countStmt->execute()) throw new Exception("Execute failed (count): " . $countStmt->error);
+        
+        $result = $countStmt->get_result();
+        $countRow = $result->fetch_assoc();
+        $displayOrderId = $countRow['order_count'];
+        $countStmt->close();
+
         // If all queries were successful, commit the transaction
         $conn->commit();
 
-        echo json_encode(['status' => 'success', 'message' => "Order #$orderId placed successfully!"]);
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Order placed successfully!',
+            'display_order_id' => $displayOrderId // Send the user-facing count back to the app
+        ]);
 
     } catch (Exception $e) {
         $conn->rollback();

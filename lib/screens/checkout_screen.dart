@@ -37,7 +37,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       if (response['status'] == 'success') {
         cart.clearCart();
-        _showOrderSuccessDialog(response['message'] ?? 'Order placed successfully!');
+        // Get the user-facing order count from the response
+        final displayOrderId = response['display_order_id'];
+        final successMessage = displayOrderId != null
+            ? 'Order #$displayOrderId has been confirmed!'
+            : response['message'] ?? 'Order placed successfully!'; // Fallback message
+
+        _showOrderSuccessDialog(successMessage);
       } else {
         _showError(response['message'] ?? 'An unknown error occurred.');
       }
