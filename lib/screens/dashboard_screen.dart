@@ -134,6 +134,24 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> { 
   String? _selectedAddress; 
 
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the address from the user data passed to the widget.
+    _selectedAddress = widget.userData['address'] as String?;
+  }
+
+  @override
+  void didUpdateWidget(covariant DashboardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If the user data from the parent changes (e.g. from profile edit), update the displayed address.
+    if (widget.userData['address'] != oldWidget.userData['address']) {
+      setState(() {
+        _selectedAddress = widget.userData['address'] as String?;
+      });
+    }
+  }
+
   Future<void> _navigateToMapAndGetAddress() async {
     dynamic rawUserId = widget.userData['id'];
     int userId = 0; 
@@ -145,6 +163,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     const String addressType = 'DisplayLocation';
 
+    // This now expects `MapSelectionScreen` to return the selected address string upon success.
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -155,10 +174,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
 
-    if (result == true) {
-      debugPrint("MapSelectionScreen indicated a save attempt for 'DisplayLocation' was successful.");
-    } else {
-      debugPrint("Map selection did not return a successful save confirmation. Result: $result");
+    // If a valid address string was returned, update the UI to show it immediately.
+    if (result is String && result.isNotEmpty) {
+      setState(() {
+        _selectedAddress = result;
+      });
     }
   }
 

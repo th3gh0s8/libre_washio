@@ -239,7 +239,7 @@ class ApiService {
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/x-w<|file_separator|>ww-form-urlencoded'},
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
           'user_id': userId.toString(),
           'name': name,
@@ -282,7 +282,6 @@ class ApiService {
     }
   }
 
-  // New method to get services for a specific station
   static Future<List<Map<String, dynamic>>> getServicesForStation(int stationId) async {
     final url = Uri.parse('${baseUrl}get_station_services.php?station_id=$stationId');
     try {
@@ -294,7 +293,7 @@ class ApiService {
             final List<dynamic> serviceDataList = decodedResponse['data'] as List<dynamic>;
             return serviceDataList.map((serviceData) => serviceData as Map<String, dynamic>).toList();
           } else {
-            return []; // No services found for this station, but request was successful
+            return [];
           }
         } else {
           throw Exception('Failed to load services for station $stationId: ${decodedResponse['message']}');
@@ -352,6 +351,47 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error fetching order details: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> saveUserLocation({
+    required int userId,
+    required String addressType,
+    required String mapAddress,
+    required double latitude,
+    required double longitude,
+    String? addressLine1,
+    String? addressLine2,
+  }) async {
+    final url = Uri.parse('${baseUrl}add_address.php'); // CORRECTED aPI ENDPOINT
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        body: jsonEncode({
+          'user_id': userId,
+          'address_type': addressType,
+          'map_address': mapAddress,
+          'latitude': latitude,
+          'longitude': longitude,
+          'address_line1': addressLine1 ?? '',
+          'address_line2': addressLine2 ?? '',
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final decodedResponse = jsonDecode(response.body) as Map<String, dynamic>;
+        return decodedResponse;
+      } else {
+        try {
+          final errorResponse = jsonDecode(response.body) as Map<String, dynamic>;
+          throw Exception('Failed to save location: ${errorResponse['message'] ?? 'Unknown server error'}');
+        } catch (_) {
+          throw Exception('Failed to save location. Status code: ${response.statusCode}, Body: ${response.body}');
+        }
+      }
+    } catch (e) {
+      throw Exception('Error saving location: $e');
     }
   }
 }

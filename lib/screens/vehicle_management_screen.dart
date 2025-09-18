@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../api.dart'; // Import ApiService
-import './add_vehicle_screen.dart'; // Import the new add vehicle screen
-import './edit_vehicle_screen.dart'; // Import the new edit vehicle screen
+import '../api.dart'; 
+import './add_vehicle_screen.dart';
+import './edit_vehicle_screen.dart';
 
 class VehicleManagementScreen extends StatefulWidget {
   final int userId;
@@ -16,38 +16,18 @@ class VehicleManagementScreen extends StatefulWidget {
 }
 
 class _VehicleManagementScreenState extends State<VehicleManagementScreen> {
-  List<Map<String, dynamic>> _vehicles = [];
-  bool _isLoadingVehicles = true;
-  String? _vehicleError;
+  late Future<List<Map<String, dynamic>>> _vehiclesFuture;
 
   @override
   void initState() {
     super.initState();
-    _fetchUserVehicles();
+    _vehiclesFuture = ApiService.getUserVehicles(widget.userId);
   }
 
-  Future<void> _fetchUserVehicles() async {
-    if (!mounted) return;
+  Future<void> _refreshVehicles() async {
     setState(() {
-      _isLoadingVehicles = true;
-      _vehicleError = null;
+      _vehiclesFuture = ApiService.getUserVehicles(widget.userId);
     });
-    try {
-      final vehicles = await ApiService.getUserVehicles(widget.userId);
-      if (mounted) {
-        setState(() {
-          _vehicles = vehicles;
-          _isLoadingVehicles = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingVehicles = false;
-          _vehicleError = "Failed to load vehicles: ${e.toString()}";
-        });
-      }
-    }
   }
 
   Future<void> _navigateToAddVehicleScreen() async {
@@ -57,9 +37,8 @@ class _VehicleManagementScreenState extends State<VehicleManagementScreen> {
         builder: (context) => AddVehicleScreen(userId: widget.userId),
       ),
     );
-
-    if (result == true && mounted) {
-      _fetchUserVehicles(); // Refresh the list if a vehicle was added
+    if (result == true) {
+      _refreshVehicles();
     }
   }
 
@@ -73,134 +52,206 @@ class _VehicleManagementScreenState extends State<VehicleManagementScreen> {
         ),
       ),
     );
-
-    if (result == true && mounted) {
-      _fetchUserVehicles(); // Refresh the list if a vehicle was updated
+    if (result == true) {
+      _refreshVehicles();
     }
   }
 
   void _showDeleteVehicleDialog(int vehicleId, String vehicleNo) {
-    bool isDialogDeleting = false;
     showDialog(
       context: context,
-      barrierDismissible: !isDialogDeleting,
       builder: (BuildContext ctx) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text('Confirm Delete'),
-              content: Text('Are you sure you want to delete vehicle "$vehicleNo"? This action cannot be undone.'),
-              actions: <Widget>[
-                TextButton(
-                  child: Text('Cancel'),
-                  onPressed: isDialogDeleting ? null : () => Navigator.of(ctx).pop(),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                  child: isDialogDeleting 
-                      ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white))) 
-                      : Text('Delete'),
-                  onPressed: isDialogDeleting ? null : () async {
-                    setDialogState(() => isDialogDeleting = true);
-                    try {
-                      final response = await ApiService.deleteVehicle(
-                        vehicleId: vehicleId,
-                        userId: widget.userId,
-                      );
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(response['message'] ?? 'Vehicle delete status unknown'), backgroundColor: response['status'] == 'success' ? Colors.green : Colors.red),
-                        );
-                        if (response['status'] == 'success') {
-                          Navigator.of(ctx).pop();
-                          _fetchUserVehicles(); 
-                        }
-                      }
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: Colors.red),
-                        );
-                      }
-                    } finally {
-                      if (mounted) {
-                        setDialogState(() => isDialogDeleting = false);
-                      }
+        return AlertDialog(
+          title: const Text('Confirm Delete'),
+          content: Text('Are you sure you want to delete vehicle "$vehicleNo"? This action cannot be undone.'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(ctx).pop(),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Delete'),
+              onPressed: () async {
+                Navigator.of(ctx).pop(); // Close dialog immediately
+                try {
+                  final response = await ApiService.deleteVehicle(
+                    vehicleId: vehicleId,
+                    userId: widget.userId,
+                  );
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(response['message'] ?? 'Vehicle delete status unknown'), backgroundColor: response['status'] == 'success' ? Colors.green : Colors.red),
+                    );
+                    if (response['status'] == 'success') {
+                      _refreshVehicles();
                     }
-                  },
-                ),
-              ],
-            );
-          }
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: Colors.red),
+                    );
+                  }
+                }
+              },
+            ),
+          ],
         );
       },
     );
   }
 
-  Widget _buildVehicleList() {
-    if (_isLoadingVehicles) {
-      return Center(child: CircularProgressIndicator());
+  IconData _getVehicleIcon(String vehicleType) {
+    switch (vehicleType.toLowerCase()) {
+      case 'car':
+        return Icons.directions_car_filled_outlined;
+      case 'motorcycle':
+      case 'bike':
+        return Icons.two_wheeler_outlined;
+      case 'van':
+        return Icons.airport_shuttle_outlined;
+      case 'suv':
+        return Icons.rv_hookup_outlined;
+      default:
+        return Icons.directions_car_outlined;
     }
-    if (_vehicleError != null) {
-      return Center(child: Padding(padding: const EdgeInsets.all(16.0), child: Text(_vehicleError!, style: TextStyle(color: Colors.red), textAlign: TextAlign.center,)));
-    }
-    if (_vehicles.isEmpty) {
-      return Center(child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Text('No vehicles registered yet.', textAlign: TextAlign.center,),
-      ));
-    }
-
-    return ListView.builder(
-      itemCount: _vehicles.length,
-      itemBuilder: (context, index) {
-        final vehicle = _vehicles[index];
-        final vehicleId = vehicle['vehicle_id'] as int;
-        final vehicleNo = vehicle['vehicle_no'] ?? 'N/A';
-        final vehicleType = vehicle['vehicle_type'] ?? 'N/A';
-        final vehicleModel = vehicle['vehicle_model'] ?? 'N/A';
-
-        return Card(
-          margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
-          child: ListTile(
-            leading: Icon(Icons.directions_car, color: Theme.of(context).primaryColor),
-            title: Text(vehicleNo, style: TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text('$vehicleType - $vehicleModel'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.edit_outlined, color: Colors.blueAccent),
-                  tooltip: 'Edit Vehicle',
-                  onPressed: () => _navigateToEditVehicleScreen(vehicle), // Updated to call new navigation method
-                ),
-                IconButton(
-                  icon: Icon(Icons.delete_outline, color: Colors.redAccent),
-                  tooltip: 'Delete Vehicle',
-                  onPressed: () => _showDeleteVehicleDialog(vehicleId, vehicleNo),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('My Vehicles'),
+        title: const Text('My Vehicles'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _refreshVehicles,
+            tooltip: 'Refresh Vehicles',
+          ),
+        ],
       ),
-      body: _buildVehicleList(),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _vehiclesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return _buildErrorWidget(theme);
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return _buildEmptyStateWidget(theme);
+          }
+
+          final vehicles = snapshot.data!;
+
+          return ListView.builder(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 80),
+            itemCount: vehicles.length,
+            itemBuilder: (context, index) {
+              final vehicle = vehicles[index];
+              final vehicleId = vehicle['vehicle_id'] as int;
+              final vehicleNo = vehicle['vehicle_no'] ?? 'N/A';
+              final vehicleType = vehicle['vehicle_type'] ?? 'N/A';
+              final vehicleModel = vehicle['vehicle_model'] ?? 'N/A';
+              final vehicleIcon = _getVehicleIcon(vehicleType);
+
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                elevation: 2.0,
+                shadowColor: theme.shadowColor.withOpacity(0.1),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      radius: 24,
+                      backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                      child: Icon(
+                        vehicleIcon,
+                        color: theme.colorScheme.primary,
+                        size: 26,
+                      ),
+                    ),
+                    title: Text(vehicleNo, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Text('$vehicleType - $vehicleModel', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.edit_outlined, color: Colors.blue.shade600),
+                          tooltip: 'Edit Vehicle',
+                          onPressed: () => _navigateToEditVehicleScreen(vehicle),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete_outline, color: Colors.red.shade600),
+                          tooltip: 'Delete Vehicle',
+                          onPressed: () => _showDeleteVehicleDialog(vehicleId, vehicleNo),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _navigateToAddVehicleScreen, 
-        icon: Icon(Icons.add),
-        label: Text('Add Vehicle'),
+        onPressed: _navigateToAddVehicleScreen,
+        icon: const Icon(Icons.add),
+        label: const Text('Add Vehicle'),
         tooltip: 'Add a new vehicle',
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+
+  Widget _buildErrorWidget(ThemeData theme) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.cloud_off_rounded, size: 80, color: theme.colorScheme.error.withOpacity(0.5)),
+            const SizedBox(height: 24),
+            Text('Failed to Load Vehicles', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text(
+              'We couldn\'t fetch your vehicle list. Please check your connection and try again.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyStateWidget(ThemeData theme) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.no_transfer_outlined, size: 80, color: Colors.grey[400]),
+            const SizedBox(height: 24),
+            Text('No Vehicles Found', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.grey[600])),
+            const SizedBox(height: 8),
+            Text(
+              'Add your vehicles to get started with our services faster.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey[500]),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

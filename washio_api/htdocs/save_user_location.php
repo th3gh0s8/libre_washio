@@ -1,14 +1,17 @@
 <?php
 header('Content-Type: application/json');
-require_once 'db.php';
+require_once 'db.php'; // Ensure you have your database connection logic here
 
+// Use a try-catch block for robust error handling
 try {
+    // Decode the incoming JSON payload
     $data = json_decode(file_get_contents('php://input'), true);
 
     if (json_last_error() !== JSON_ERROR_NONE) {
         throw new Exception('Invalid JSON received.');
     }
 
+    // Extract and validate required fields
     $userId = $data['user_id'] ?? null;
     $addressType = $data['address_type'] ?? null;
     $mapAddress = $data['map_address'] ?? null;
@@ -19,6 +22,7 @@ try {
         throw new Exception('Missing required fields: user_id, address_type, map_address, latitude, and longitude are required.');
     }
     
+    // Optional fields
     $addressLine1 = $data['address_line1'] ?? '';
     $addressLine2 = $data['address_line2'] ?? '';
 
@@ -27,6 +31,7 @@ try {
     }
 
     $existingId = null;
+    // For 'Home' and 'Work', we implement an UPSERT logic to avoid duplicates for these specific types.
     if ($addressType == 'Home' || $addressType == 'Work') {
         $stmt_check = $conn->prepare("SELECT id FROM user_locations WHERE userTb = ? AND Address_Type = ?");
         if ($stmt_check === false) throw new Exception('Prepare failed (check): ' . $conn->error);
@@ -41,6 +46,7 @@ try {
     }
 
     if ($existingId) {
+        // --- UPDATE existing location ---
         $stmt_update = $conn->prepare(
             "UPDATE user_locations SET Address_Line1 = ?, Address_Line2 = ?, longitude = ?, latitude = ?, Map_Address = ? WHERE id = ?"
         );
@@ -54,6 +60,7 @@ try {
         }
         $stmt_update->close();
     } else {
+        // --- INSERT new location ---
         $stmt_insert = $conn->prepare(
             "INSERT INTO user_locations (userTb, Address_Type, Address_Line1, Address_Line2, longitude, latitude, Map_Address) VALUES (?, ?, ?, ?, ?, ?, ?)"
         );
@@ -71,11 +78,11 @@ try {
     $conn->close();
 
 } catch (Exception $e) {
-    http_response_code(500);
+    http_response_code(500); // Internal Server Error
     echo json_encode([
         'status' => 'error',
         'message' => $e->getMessage(),
-        'file' => basename($e->getFile()),
+        'file' => basename($e->getFile()), // Show only filename for security
         'line' => $e->getLine()
     ]);
 }
