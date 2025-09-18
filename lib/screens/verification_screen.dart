@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../api.dart'; 
-import 'dashboard_screen.dart'; // This file now contains AppShell
+import '../session_manager.dart'; // Import the session manager
+import 'dashboard_screen.dart';
 import 'registration_screen.dart'; 
 
 class VerificationScreen extends StatefulWidget {
@@ -64,6 +65,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
           Map<String, dynamic>? userData = response['user_data'] as Map<String, dynamic>?;
 
           if (userExists && userData != null) {
+            // --- SAVE USER DATA TO SESSION ---
+            await SessionManager.saveUserData(userData);
+
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(

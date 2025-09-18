@@ -1,21 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; 
-import 'theme_provider.dart';
-import 'cart_provider.dart';
+import 'package:provider/provider.dart';
+import './theme_provider.dart';
+import './cart_provider.dart';
+import './session_manager.dart';
+import './app_theme.dart'; // Import the new theme file
 import 'screens/welcome_screen.dart';
-import 'screens/cart_screen.dart'; 
+import 'screens/dashboard_screen.dart';
+import 'screens/cart_screen.dart';
 
-void main() async { 
-  WidgetsFlutterBinding.ensureInitialized(); 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => CartProvider()),
-      ],
-      child: const MyApp(),
-    ),
-  );
+void main() {
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -23,151 +17,77 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-
-    final Color darkPrimaryColor = Colors.blue[300]!;
-    final Color darkSecondaryColor = Colors.lightBlueAccent[100]!;
-
-    return MaterialApp(
-      title: 'Washio',
-      themeMode: themeProvider.themeMode,
-      theme: ThemeData( 
-        colorScheme: ColorScheme.fromSwatch(
-          primarySwatch: Colors.blue,
-          brightness: Brightness.light,
-        ),
-      ),
-      darkTheme: ThemeData( 
-        brightness: Brightness.dark, 
-        scaffoldBackgroundColor: Colors.black,
-        appBarTheme: AppBarTheme(
-          backgroundColor: const Color(0xFF1A1A1A), 
-          foregroundColor: Colors.white,
-          elevation: 0, 
-        ),
-        colorScheme: ColorScheme.dark(
-          primary: darkPrimaryColor, 
-          secondary: darkSecondaryColor, 
-          background: Colors.black,      
-          surface: const Color(0xFF121212),    
-          onPrimary: Colors.black,       
-          onSecondary: Colors.black,     
-          onBackground: Colors.white,    
-          onSurface: Colors.white,       
-          onError: Colors.black,         
-          error: Colors.redAccent[100]!, 
-        ),
-        cardTheme: CardThemeData(
-          color: const Color(0xFF1E1E1E),      
-          elevation: 2.0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        dialogBackgroundColor: Colors.black, 
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: darkPrimaryColor, 
-            foregroundColor: Colors.black, 
-          ),
-        ),
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            foregroundColor: darkPrimaryColor,
-          )
-        ),
-        bottomNavigationBarTheme: BottomNavigationBarThemeData(
-          backgroundColor: Colors.black, 
-          selectedItemColor: darkPrimaryColor,
-          unselectedItemColor: Colors.grey[600],
-          elevation: 0,
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: Colors.grey[850]?.withOpacity(0.5),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8.0),
-            borderSide: BorderSide(color: darkPrimaryColor),
-          ),
-          hintStyle: TextStyle(color: Colors.grey[600]),
-        ),
-        dividerColor: Colors.grey[800], 
-      ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const WelcomeScreen(),
-        '/cart': (context) {
-          final userId = ModalRoute.of(context)!.settings.arguments as int;
-          return CartScreen(userId: userId);
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+      ],
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            title: 'Washio',
+            theme: AppTheme.lightTheme, // Use the new light theme
+            darkTheme: AppTheme.darkTheme, // Use the new dark theme
+            themeMode: themeProvider.themeMode,
+            debugShowCheckedModeBanner: false,
+            home: const AuthChecker(), 
+            routes: {
+              '/cart': (context) {
+                final userId = ModalRoute.of(context)?.settings.arguments as int?;
+                if (userId != null) {
+                  return CartScreen(userId: userId);
+                } else {
+                  return const Scaffold(
+                    body: Center(
+                      child: Text('Error: User ID not provided for cart.'),
+                    ),
+                  );
+                }
+              },
+            },
+          );
         },
-        '/verification': (context) {
-          final Object? args = ModalRoute.of(context)!.settings.arguments;
-          final String phoneNumber = (args is String) ? args : ""; 
-          return VerificationScreenLocal(phoneNumber: phoneNumber);
-        }
-      },
-      debugShowCheckedModeBanner: false,
+      ),
     );
   }
 }
 
-class VerificationScreenLocal extends StatelessWidget {
-  final String phoneNumber;
+class AuthChecker extends StatefulWidget {
+  const AuthChecker({Key? key}) : super(key: key);
 
-  const VerificationScreenLocal({Key? key, required this.phoneNumber}) : super(key: key); 
+  @override
+  _AuthCheckerState createState() => _AuthCheckerState();
+}
+
+class _AuthCheckerState extends State<AuthChecker> {
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    Map<String, dynamic>? userData = await SessionManager.loadUserData();
+    if (mounted) {
+      if (userData != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => AppShell(userData: userData)),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Verification'), 
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.signal_cellular_4_bar), 
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.battery_full), 
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Enter the 4-digit code sent via SMS at $phoneNumber.',
-              style: const TextStyle(fontSize: 18), 
-            ),
-            const SizedBox(height: 20),
-            const Text('Changed your mobile number?'), 
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(4, (index) => 
-              SizedBox( 
-                width: 50,
-                child: const TextField( 
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                onPressed: () {},
-                child: const Text('Resend code by SMS'), 
-              ),
-            ),
-          ],
-        ),
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
       ),
     );
   }

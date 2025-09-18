@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme_provider.dart';
 import '../api.dart';
+import '../session_manager.dart'; // Import the session manager
 import './actual_edit_profile_form_screen.dart';
 import './about_screen.dart';
 import './welcome_screen.dart';
 import './saved_addresses_screen.dart';
-import './vehicle_management_screen.dart'; // <<< NEW IMPORT for Vehicle Management
+import './vehicle_management_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -25,14 +26,12 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   String _displayName = "User";
   String _displayEmail = "";
-  late int _currentUserId; // To store the user ID for navigation
+  late int _currentUserId;
 
   @override
   void initState() {
     super.initState();
     _updateDisplayDataFromWidgetData();
-    // Ensure 'id' is the correct key for user ID from your userData map
-    // and handle potential null or incorrect type if necessary.
     _currentUserId = widget.userData['id'] as int; 
   }
 
@@ -41,20 +40,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.didUpdateWidget(oldWidget);
     if (widget.userData != oldWidget.userData) {
       _updateDisplayDataFromWidgetData();
-      // Update user ID if it could change during the lifetime of this widget instance
       _currentUserId = widget.userData['id'] as int;
     }
   }
 
   void _updateDisplayDataFromWidgetData() {
-    _displayName = widget.userData['name']?.toString() ?? 'User';
-    _displayEmail = widget.userData['email']?.toString() ?? 'No email';
-    // No need to call setState here if initState and didUpdateWidget handle it,
-    // unless _navigateToActualEditProfile doesn't guarantee a rebuild that reflects changes.
-    // However, since it's called in initState and didUpdateWidget, direct setState might be redundant
-    // if those methods correctly trigger rebuilds. For safety or if direct updates are needed:
     if (mounted) {
-      setState(() {});
+      setState(() {
+        _displayName = widget.userData['name']?.toString() ?? 'User';
+        _displayEmail = widget.userData['email']?.toString() ?? 'No email';
+      });
     }
   }
 
@@ -65,14 +60,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         builder: (context) => ActualEditProfileFormScreen(
           initialUserData: widget.userData,
           onUserDataUpdated: (updatedData) {
-            // This callback is good for updating the source of truth if needed
             widget.onUserDataUpdated?.call(updatedData);
-            // And also update local state if this screen remains visible
             if (mounted) {
                  setState(() {
-                   // Merge updatedData into widget.userData if it's the source
                    widget.userData.addAll(updatedData);
-                  _updateDisplayDataFromWidgetData(); // Refresh display name/email
+                  _updateDisplayDataFromWidgetData();
                  });
             }
           },
@@ -80,7 +72,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ),
     );
 
-    // Fallback if onUserDataUpdated isn't called or further updates are needed
     if (result != null && result is Map<String, dynamic> && mounted) {
        _updateDisplayDataFromWidgetData();
     }
@@ -100,7 +91,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  void _navigateToVehicleManagementScreen() { // <<< NEW METHOD
+  void _navigateToVehicleManagementScreen() {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -109,11 +100,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  void _handleLogout() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-      (Route<dynamic> route) => false,
-    );
+  Future<void> _handleLogout() async {
+    // Clear the saved user data from the device
+    await SessionManager.clearUserData();
+
+    // Navigate back to the WelcomeScreen and remove all previous routes
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+        (Route<dynamic> route) => false,
+      );
+    }
   }
 
   Widget _buildSectionTitle(BuildContext context, String title) {
@@ -197,7 +194,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             trailing: const Icon(Icons.chevron_right),
             onTap: _navigateToSavedAddressesScreen,
           ),
-          ListTile( // <<< NEW LISTTILE FOR VEHICLES
+          ListTile(
             leading: const Icon(Icons.directions_car_outlined), 
             title: const Text('My Vehicles'),
             trailing: const Icon(Icons.chevron_right),
