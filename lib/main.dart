@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import './theme_provider.dart';
 import './cart_provider.dart';
-import './session_manager.dart'; // Import the session manager
+import './session_manager.dart';
+import './app_theme.dart'; // Import the new theme file
 import 'screens/welcome_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/cart_screen.dart';
@@ -25,10 +26,11 @@ class MyApp extends StatelessWidget {
         builder: (context, themeProvider, child) {
           return MaterialApp(
             title: 'Washio',
-            theme: ThemeData.light(),
-            darkTheme: ThemeData.dark(),
+            theme: AppTheme.lightTheme, // Use the new light theme
+            darkTheme: AppTheme.darkTheme, // Use the new dark theme
             themeMode: themeProvider.themeMode,
-            home: const AuthChecker(), // Start with the AuthChecker
+            debugShowCheckedModeBanner: false,
+            home: const AuthChecker(), 
             routes: {
               '/cart': (context) {
                 final userId = ModalRoute.of(context)?.settings.arguments as int?;
@@ -83,7 +85,6 @@ class _AuthCheckerState extends State<AuthChecker> {
 
   @override
   Widget build(BuildContext context) {
-    // Show a loading indicator while checking auth status
     return const Scaffold(
       body: Center(
         child: CircularProgressIndicator(),

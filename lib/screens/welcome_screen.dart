@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../api.dart'; 
 import '../theme_provider.dart'; 
 import 'verification_screen.dart';
-import 'dashboard_screen.dart'; 
 
 class PhoneNumberRule {
   final int inputLength; 
@@ -61,15 +60,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     'IN': PhoneNumberRule(inputLength: 10, actualLength: 10, forbidLeadingZero: false), 
   };
 
-  static const String _testCountryCode = "+94";
-  static const String _testPhoneNumber = "123456789";
-  static final Map<String, dynamic> _testUserData = {
-    'id': 'test_user_001',
-    'name': 'Test User',
-    'phone': '+94123456789',
-    'email': 'test@example.com',
-  };
-
   @override
   void initState() {
     super.initState();
@@ -92,27 +82,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           ? _selectedCountryCode.replaceAll(' ', '') 
           : '+' + _selectedCountryCode.replaceAll(' ', '');
 
-    if (currentSelectedDialCode == _testCountryCode && phoneInput == _testPhoneNumber) {
-      setState(() => _isLoading = true);
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => AppShell(userData: _testUserData)),
-          (Route<dynamic> route) => false,
-        );
-      }
-      if (mounted) setState(() => _isLoading = false);
-      return; 
-    }
-
     setState(() => _isLoading = true);
     try {
       final response = await ApiService.requestOtp(phoneInput, currentSelectedDialCode);
       if (mounted) {
         if (response['status'] == 'success') {
-          // <<< NEW: Extract otp_purpose from the response
-          String otpPurpose = response['otp_purpose'] as String? ?? 'login'; // Default to 'login' if not present
+          String otpPurpose = response['otp_purpose'] as String? ?? 'login';
 
           Navigator.push(
             context,
@@ -121,7 +96,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 phoneNumber: phoneInput,
                 countryCode: currentSelectedDialCode,
                 countryName: _selectedCountryName,
-                otpPurpose: otpPurpose, // <<< NEW: Pass otpPurpose here
+                otpPurpose: otpPurpose,
               ),
             ),
           );
@@ -144,7 +119,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     }
   }
 
-  Widget buildMobileNumberField(BuildContext context) { // Pass BuildContext
+  Widget buildMobileNumberField(BuildContext context) {
     final theme = Theme.of(context);
 
     return Form(
@@ -160,7 +135,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             decoration: BoxDecoration(
-              border: Border.all(color: theme.dividerColor), // Theme-aware border
+              border: Border.all(color: theme.dividerColor),
               borderRadius: BorderRadius.circular(5.0),
             ),
             child: Row(
@@ -180,7 +155,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   showCountryOnly: false,
                   showOnlyCountryWhenClosed: false,
                   alignLeft: false,
-                  textStyle: TextStyle(color: theme.colorScheme.onSurface), // For the displayed code
+                  textStyle: TextStyle(color: theme.colorScheme.onSurface),
                   dialogBackgroundColor: theme.dialogBackgroundColor,
                   dialogTextStyle: TextStyle(color: theme.colorScheme.onSurface),
                   searchDecoration: InputDecoration(
@@ -194,16 +169,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     ),
                     prefixIcon: Icon(Icons.search, color: theme.iconTheme.color), 
                   ),
-                  searchStyle: TextStyle(color: theme.colorScheme.onSurface), // For text typed in search
+                  searchStyle: TextStyle(color: theme.colorScheme.onSurface),
                   flagDecoration: BoxDecoration(borderRadius: BorderRadius.circular(2)),
-                  boxDecoration: BoxDecoration(color: Colors.transparent), // To prevent potential conflict
+                  boxDecoration: BoxDecoration(color: Colors.transparent),
                 ),
                 const SizedBox(width: 5),
                 Expanded(
                   child: TextFormField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
-                    style: TextStyle(color: theme.colorScheme.onSurface), // For typed phone number
+                    style: TextStyle(color: theme.colorScheme.onSurface),
                     inputFormatters: [
                       NoLeadingZeroFormatter(forbidLeadingZero: _currentPhoneRule.forbidLeadingZero),
                       LengthLimitingTextInputFormatter(_currentPhoneRule.inputLength),
@@ -217,12 +192,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your mobile number.';
-                      }
-                      String currentSelectedDialCodeForValidation = _selectedCountryCode.startsWith('+') 
-                          ? _selectedCountryCode.replaceAll(' ', '') 
-                          : '+' + _selectedCountryCode.replaceAll(' ', '');
-                      if (currentSelectedDialCodeForValidation == _testCountryCode && value.trim() == _testPhoneNumber) {
-                        return null; 
                       }
                       if (value.trim().length != _currentPhoneRule.actualLength) {
                         return 'Enter a valid ${_currentPhoneRule.actualLength}-digit number for $_selectedCountryName.';
@@ -262,7 +231,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
-              buildMobileNumberField(context), // Pass context here
+              buildMobileNumberField(context),
               const SizedBox(height: 20),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -303,18 +272,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 10),
                 ),
                 onPressed: () {
-                  // Implement Google Sign-In logic here
+                  // Placeholder for Google Sign-In
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Google Sign-In coming soon!')),
+                  );
                 },
-                icon: Image.asset('assets/images/google_logo.png', height: 20, width: 20),
-                label: const Text('Continue with Google'),
+                icon: Image.asset('assets/images/google_logo.png', height: 24.0),
+                label: const Text('Sign in with Google'),
               ),
-              const SizedBox(height: 20),
-              const Text(
-                '''By proceeding, you consent to receiving calls, WhatsApp or SMS/RCS messages, including by automated means, from Washio and its affiliates to the number provided.''',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12),
-              ),
-              const SizedBox(height: 20),
             ],
           ),
         ),
