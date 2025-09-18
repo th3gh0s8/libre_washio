@@ -1,9 +1,7 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../cart_provider.dart';
-import '../api.dart'; // For API base URL
+import './checkout_screen.dart'; // Import the new checkout screen
 
 class CartScreen extends StatefulWidget {
   final int userId;
@@ -15,64 +13,14 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  bool _isProcessing = false;
 
-  Future<void> _handleCheckout(CartProvider cart) async {
-    if (cart.items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Your cart is empty.')),
-      );
-      return;
-    }
-
-    setState(() {
-      _isProcessing = true;
-    });
-
-    final firstItem = cart.items.first;
-    final stationId = firstItem['station_id'] as int? ?? 0; // Ensure station_id exists in your service item map
-
-    final url = Uri.parse('${ApiService.baseUrl}/create_order.php');
-
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'user_id': widget.userId,
-          'station_id': stationId,
-          'items': cart.items,
-          'total_amount': cart.totalPrice,
-          'payment_method': 'cash_on_delivery', // Or get from UI
-        }),
-      );
-
-      if (!mounted) return;
-
-      final responseData = jsonDecode(response.body);
-
-      if (responseData['status'] == 'success') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(responseData['message']), backgroundColor: Colors.green),
-        );
-        cart.clearCart();
-        Navigator.of(context).pop();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(responseData['message']), backgroundColor: Colors.red),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred: ${e.toString()}'), backgroundColor: Colors.red),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessing = false;
-        });
-      }
-    }
+  void _navigateToCheckout() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CheckoutScreen(userId: widget.userId),
+      ),
+    );
   }
 
   @override
@@ -142,10 +90,8 @@ class _CartScreenState extends State<CartScreen> {
                 minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              onPressed: (cart.items.isEmpty || _isProcessing) ? null : () => _handleCheckout(cart),
-              child: _isProcessing
-                  ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white))
-                  : const Text('Proceed to Checkout', style: TextStyle(fontSize: 16)),
+              onPressed: (cart.items.isEmpty) ? null : _navigateToCheckout,
+              child: const Text('Proceed to Checkout', style: TextStyle(fontSize: 16)),
             ),
           ),
         ],

@@ -394,4 +394,49 @@ class ApiService {
       throw Exception('Error saving location: $e');
     }
   }
+
+  static Future<Map<String, dynamic>> createOrder({
+    required int userId,
+    required List<Map<String, dynamic>> items,
+  }) async {
+    final url = Uri.parse('${baseUrl}create_order.php');
+    if (items.isEmpty) {
+      throw Exception("Cannot create an order with no items.");
+    }
+
+    final firstItem = items.first;
+    final stationId = firstItem['station_id'] as int? ?? 0;
+    final totalAmount = items.fold(0.0, (sum, item) {
+      final price = (item['service_price'] as num?) ?? 0.0;
+      final quantity = (item['quantity'] as int?) ?? 0;
+      return sum + (price * quantity);
+    });
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        body: jsonEncode({
+          'user_id': userId,
+          'station_id': stationId,
+          'items': items,
+          'total_amount': totalAmount,
+          'payment_method': 'cash_on_delivery',
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        try {
+          final errorResponse = jsonDecode(response.body) as Map<String, dynamic>;
+          throw Exception('Failed to create order: ${errorResponse['message'] ?? 'Unknown server error'}');
+        } catch (_) {
+          throw Exception('Failed to create order. Status code: ${response.statusCode}, Body: ${response.body}');
+        }
+      }
+    } catch (e) {
+      throw Exception('Error creating order: $e');
+    }
+  }
 }
