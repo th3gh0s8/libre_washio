@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../cart_provider.dart';
+import '../api.dart'; 
 import 'edit_profile_screen.dart'; 
 import 'map_selection_screen.dart'; 
-import './services_screen.dart';
+import './services_screen.dart'; // Potentially for navigation or shared widgets
 import './orders_screen.dart';
 
 // --- AppShell Widget (Manages Bottom Navigation) ---
@@ -13,10 +14,10 @@ class AppShell extends StatefulWidget {
   const AppShell({super.key, required this.userData});
 
   @override
-  _AppShellState createState() => _AppShellState();
+  AppShellState createState() => AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class AppShellState extends State<AppShell> {
   int _selectedIndex = 0;
   late List<Widget> _screens;
   late Map<String, dynamic> _currentActionUserData;
@@ -42,7 +43,7 @@ class _AppShellState extends State<AppShell> {
   void _initializeScreens() {
     _screens = [
       DashboardScreen(userData: _currentActionUserData), // Home (Index 0)
-      const ServicesScreen(), // Services (Index 1) - Now imported
+      const ServicesScreen(), // Services (Index 1)
       const BrowseScreen(), // Browse (Index 2)
       OrdersScreen(userId: widget.userData['id'] as int), // Orders (Index 3)
       EditProfileScreen( // Account (Index 4)
@@ -127,23 +128,52 @@ class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, required this.userData});
 
   @override
-  _DashboardScreenState createState() => _DashboardScreenState();
+  DashboardScreenState createState() => DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> { 
+class DashboardScreenState extends State<DashboardScreen> { 
   String? _selectedAddress; 
+  late Future<List<Map<String, dynamic>>> _dashboardDataFuture;
 
   @override
   void initState() {
     super.initState();
-    // Initialize the address from the user data passed to the widget.
     _selectedAddress = widget.userData['address'] as String?;
+    _dashboardDataFuture = _fetchDashboardData();
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchDashboardData() async {
+    try {
+      final List<Map<String, dynamic>> stations = await ApiService.getStations();
+      if (stations.isEmpty) {
+        return []; 
+      }
+
+      List<Map<String, dynamic>> stationsWithServices = [];
+      for (var stationData in stations) {
+        try {
+          final List<Map<String, dynamic>> services = await ApiService.getServicesForStation(stationData['id'] as int);
+          stationsWithServices.add({
+            'station_data': stationData,
+            'station_services': services,
+          });
+        } catch (e) {
+          stationsWithServices.add({
+            'station_data': stationData,
+            'station_services': [],
+            'error_loading_services': e.toString(),
+          });
+        }
+      }
+      return stationsWithServices;
+    } catch (e) {
+      throw Exception("Failed to load station data: ${e.toString()}");
+    }
   }
 
   @override
   void didUpdateWidget(covariant DashboardScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // If the user data from the parent changes (e.g. from profile edit), update the displayed address.
     if (widget.userData['address'] != oldWidget.userData['address']) {
       setState(() {
         _selectedAddress = widget.userData['address'] as String?;
@@ -159,10 +189,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } else if (rawUserId is String) {
       userId = int.tryParse(rawUserId) ?? 0;
     }
-
     const String addressType = 'DisplayLocation';
-
-    // This now expects `MapSelectionScreen` to return the selected address string upon success.
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -172,8 +199,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
     );
-
-    // If a valid address string was returned, update the UI to show it immediately.
     if (result is String && result.isNotEmpty) {
       setState(() {
         _selectedAddress = result;
@@ -182,89 +207,189 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   String _getShortenedAddress(String? fullAddress) {
-    if (fullAddress == null || fullAddress.isEmpty) {
-      return "Set your location";
-    }
+    if (fullAddress == null || fullAddress.isEmpty) return "Set your location";
     const int maxLengthPreferred = 35; 
-    if (fullAddress.length <= maxLengthPreferred) {
-      return fullAddress;
-    }
+    if (fullAddress.length <= maxLengthPreferred) return fullAddress;
     List<String> parts = fullAddress.split(',');
-    if (parts.length >= 2) {
-      String shortened = '${parts[0].trim()}, ${parts[1].trim()}';
-      return shortened;
-    }
-    if (parts.isNotEmpty) {
-      return parts[0].trim();
-    }
+    if (parts.length >= 2) return '${parts[0].trim()}, ${parts[1].trim()}';
+    if (parts.isNotEmpty) return parts[0].trim();
     return fullAddress; 
   }
 
   Widget _buildLocationDisplayWidget(BuildContext context, String? currentAddress, VoidCallback onTap) {
     final theme = Theme.of(context);
     String displayAddress = _getShortenedAddress(currentAddress);
-
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0), 
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8.0), 
-        ),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(8.0)),
         child: Row(
           mainAxisSize: MainAxisSize.min, 
           children: [
             Flexible(
-              child: Text(
-                displayAddress, 
-                style: TextStyle(
-                  fontSize: 14.0, 
-                  fontWeight: FontWeight.w500,
-                  color: theme.colorScheme.onSurface, 
-                ),
-                overflow: TextOverflow.ellipsis, 
-                maxLines: 1,
-                softWrap: false,
-              ),
+              child: Text(displayAddress, 
+                style: TextStyle(fontSize: 14.0, fontWeight: FontWeight.w500, color: theme.colorScheme.onSurface), 
+                overflow: TextOverflow.ellipsis, maxLines: 1, softWrap: false),
             ),
             const SizedBox(width: 4.0), 
-            Icon(
-              Icons.arrow_drop_down, 
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
-              size: 20
-            ), 
+            Icon(Icons.arrow_drop_down, color: theme.colorScheme.onSurface.withAlpha(179), size: 20),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildServicesDisplay(BuildContext context, List<Map<String, dynamic>> availableServices, Map<String, dynamic> servicesStation, {String? errorLoadingServices}) {
+    final theme = Theme.of(context);
+    final cart = Provider.of<CartProvider>(context, listen: false);
+    String stationName = servicesStation['name']?.toString() ?? 'Nearby Station';
+
+    if (errorLoadingServices != null) {
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Text("Could not load services for $stationName: $errorLoadingServices", style: TextStyle(color: theme.colorScheme.error, fontSize: 14)),
+      );
+    }
+
+    if (availableServices.isEmpty) {
+        return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Center(child: Text("No services available from $stationName at the moment.", style: const TextStyle(fontSize: 16), textAlign: TextAlign.center,)),
+      );
+    }
+    
+    int displayedItemCountLimit = 3;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Text(
+            "Services from $stationName",
+            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ),
+        // Directly generate List<Widget> for services
+        ...availableServices.take(displayedItemCountLimit).map((service) {
+          final serviceName = service['service_name']?.toString() ?? 'Unnamed Service';
+          final servicePrice = service['service_price'] != null ? '\$${(service['service_price'] as num).toStringAsFixed(2)}' : 'Price N/A';
+          
+          return Card(
+            margin: const EdgeInsets.symmetric(vertical: 4.0),
+            child: ListTile(
+              dense: true,
+              title: Text(
+                serviceName, 
+                style: theme.textTheme.titleMedium, 
+                overflow: TextOverflow.ellipsis, 
+                maxLines: 1,
+              ),
+              subtitle: Text(
+                servicePrice, 
+                style: TextStyle(color: theme.colorScheme.primary), 
+                overflow: TextOverflow.ellipsis, 
+                maxLines: 1,
+              ),
+              trailing: IconButton(
+                icon: const Icon(Icons.add_shopping_cart),
+                padding: EdgeInsets.zero, 
+                constraints: const BoxConstraints(), 
+                tooltip: 'Add to cart',
+                onPressed: () {
+                  final itemToAdd = {
+                    ...service,
+                    'station_id': servicesStation['id'], 
+                  };
+                  cart.addItem(itemToAdd);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('$serviceName added to cart'),
+                      duration: const Duration(seconds: 2),
+                      action: SnackBarAction(label: 'UNDO', onPressed: () => cart.removeItem(itemToAdd)),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        }), // End of .map()
+
+        if (availableServices.length > displayedItemCountLimit) 
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: TextButton(
+              onPressed: () {
+                // print("Navigate to full services screen/tab for station ${servicesStation['id']}");
+              },
+              child: const Text("View All Services..."),
+            ),
+          ),
+         const SizedBox(height: 16), 
+         const Divider(), 
+         const SizedBox(height: 16), 
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    String userName = widget.userData['name']?.toString() ?? 'User';
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: _buildLocationDisplayWidget(context, _selectedAddress, _navigateToMapAndGetAddress),
         titleSpacing: 0, 
         automaticallyImplyLeading: false, 
-        centerTitle: false, // Added this line
+        centerTitle: false, 
       ),
-      body: Padding( 
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.start, 
-          crossAxisAlignment: CrossAxisAlignment.start, 
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 16), 
-            Text(
-              'Welcome, $userName!',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'This is your Washio Dashboard.',
-              style: TextStyle(fontSize: 18),
+            FutureBuilder<List<Map<String, dynamic>>>(
+              future: _dashboardDataFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 50.0), child: CircularProgressIndicator()));
+                }
+                if (snapshot.hasError) {
+                  return Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text("Error fetching dashboard content: ${snapshot.error}", style: TextStyle(color: theme.colorScheme.error, fontSize: 16), textAlign: TextAlign.center),
+                  );
+                }
+                if (snapshot.hasData) {
+                  final List<Map<String, dynamic>> stationsWithData = snapshot.data!;
+
+                  if (stationsWithData.isEmpty) {
+                     return Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Center(child: Text("No service stations found.", style: TextStyle(fontSize: 16), textAlign: TextAlign.center,)),
+                      );
+                  }
+
+                  List<Widget> stationWidgets = [];
+                  for (var stationEntry in stationsWithData) {
+                    final stationData = stationEntry['station_data'] as Map<String, dynamic>; 
+                    final stationServices = stationEntry['station_services'] as List<Map<String, dynamic>>;
+                    final String? serviceLoadError = stationEntry['error_loading_services'] as String?;
+
+                    stationWidgets.add(_buildServicesDisplay(context, stationServices, stationData, errorLoadingServices: serviceLoadError));
+                  }
+                  
+                  return Column(children: stationWidgets);
+
+                } else {
+                  return const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Center(child: Text("No data loaded for stations.", style: TextStyle(fontSize: 16))),
+                  );
+                }
+              },
             ),
           ],
         ),
