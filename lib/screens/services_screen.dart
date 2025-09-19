@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../api.dart';
 import '../cart_provider.dart';
-import './cart_screen.dart';
 
 class ServicesScreen extends StatefulWidget {
-  const ServicesScreen({Key? key}) : super(key: key);
+  const ServicesScreen({super.key});
 
   @override
   _ServicesScreenState createState() => _ServicesScreenState();
@@ -110,7 +109,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           child: Padding(padding: const EdgeInsets.all(16.0), child: Text(_stationError!, style: const TextStyle(color: Colors.red, fontSize: 16), textAlign: TextAlign.center)));
     }
     if (_stations.isEmpty) {
-      return const Center(child: Padding(padding: const EdgeInsets.all(16.0), child: Text('No service stations found.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
+      return const Center(child: Padding(padding: EdgeInsets.all(16.0), child: Text('No service stations found.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
     }
     return ListView.builder(
       itemCount: _stations.length,
@@ -147,7 +146,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           child: Padding(padding: const EdgeInsets.all(16.0), child: Text(_serviceError!, style: const TextStyle(color: Colors.red, fontSize: 16), textAlign: TextAlign.center)));
     } else if (_servicesForSelectedStation.isEmpty) {
       servicesContent = const Center(
-          child: Padding(padding: const EdgeInsets.all(16.0), child: Text('No services listed for this station.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
+          child: Padding(padding: EdgeInsets.all(16.0), child: Text('No services listed for this station.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
     } else {
       servicesContent = ListView.separated(
         shrinkWrap: true, 

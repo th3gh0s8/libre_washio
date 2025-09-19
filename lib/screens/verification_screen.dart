@@ -12,12 +12,12 @@ class VerificationScreen extends StatefulWidget {
   final String otpPurpose; 
 
   const VerificationScreen({
-    Key? key,
+    super.key,
     required this.phoneNumber,
     required this.countryCode,
     required this.countryName,
     required this.otpPurpose, 
-  }) : super(key: key);
+  });
 
   @override
   _VerificationScreenState createState() => _VerificationScreenState();

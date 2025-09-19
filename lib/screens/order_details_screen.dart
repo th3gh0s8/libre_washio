@@ -7,11 +7,11 @@ class OrderDetailsScreen extends StatefulWidget {
   final String? displayOrderId; // The user-facing sequential ID for display
 
   const OrderDetailsScreen({
-    Key? key,
+    super.key,
     required this.orderId,
     required this.stationName,
     this.displayOrderId,
-  }) : super(key: key);
+  });
 
   @override
   _OrderDetailsScreenState createState() => _OrderDetailsScreenState();

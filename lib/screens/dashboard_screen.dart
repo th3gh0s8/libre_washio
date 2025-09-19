@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../cart_provider.dart';
-import './cart_screen.dart';
 import 'edit_profile_screen.dart'; 
 import 'map_selection_screen.dart'; 
 import './services_screen.dart';
@@ -11,7 +10,7 @@ import './orders_screen.dart';
 class AppShell extends StatefulWidget {
   final Map<String, dynamic> userData;
 
-  const AppShell({Key? key, required this.userData}) : super(key: key);
+  const AppShell({super.key, required this.userData});
 
   @override
   _AppShellState createState() => _AppShellState();
@@ -125,7 +124,7 @@ class _AppShellState extends State<AppShell> {
 class DashboardScreen extends StatefulWidget { 
   final Map<String, dynamic> userData;
 
-  const DashboardScreen({Key? key, required this.userData}) : super(key: key);
+  const DashboardScreen({super.key, required this.userData});
 
   @override
   _DashboardScreenState createState() => _DashboardScreenState();
@@ -249,6 +248,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: _buildLocationDisplayWidget(context, _selectedAddress, _navigateToMapAndGetAddress),
         titleSpacing: 0, 
         automaticallyImplyLeading: false, 
+        centerTitle: false, // Added this line
       ),
       body: Padding( 
         padding: const EdgeInsets.all(16.0),
@@ -276,7 +276,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 // --- Placeholder Screens (ServicesScreen has been moved to its own file) ---
 
 class BrowseScreen extends StatelessWidget {
-  const BrowseScreen({Key? key}) : super(key: key);
+  const BrowseScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

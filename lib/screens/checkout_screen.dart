@@ -6,7 +6,7 @@ import '../api.dart';
 class CheckoutScreen extends StatefulWidget {
   final int userId;
 
-  const CheckoutScreen({Key? key, required this.userId}) : super(key: key);
+  const CheckoutScreen({super.key, required this.userId});
 
   @override
   _CheckoutScreenState createState() => _CheckoutScreenState();
@@ -113,7 +113,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     subtitle: Text('Quantity: $quantity'),
                     trailing: Text('\$${(itemPrice * quantity).toStringAsFixed(2)}'),
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),

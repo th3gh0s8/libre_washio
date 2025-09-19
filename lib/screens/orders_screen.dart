@@ -6,7 +6,7 @@ import './order_details_screen.dart';
 class StatusBadge extends StatelessWidget {
   final String status;
 
-  const StatusBadge({Key? key, required this.status}) : super(key: key);
+  const StatusBadge({super.key, required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +69,7 @@ class StatusBadge extends StatelessWidget {
 class OrdersScreen extends StatefulWidget {
   final int userId;
 
-  const OrdersScreen({Key? key, required this.userId}) : super(key: key);
+  const OrdersScreen({super.key, required this.userId});
 
   @override
   _OrdersScreenState createState() => _OrdersScreenState();

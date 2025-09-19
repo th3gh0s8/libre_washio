@@ -7,11 +7,11 @@ class ProfileScreen extends StatefulWidget {
   final String initialCountryName;
 
   const ProfileScreen({
-    Key? key,
+    super.key,
     required this.initialPhoneNumber,
     required this.initialCountryCode,
     required this.initialCountryName,
-  }) : super(key: key);
+  });
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();

@@ -7,10 +7,10 @@ class RegistrationScreen extends StatefulWidget {
   final String countryCode;
 
   const RegistrationScreen({
-    Key? key,
+    super.key,
     required this.phoneNumber,
     required this.countryCode,
-  }) : super(key: key);
+  });
 
   @override
   _RegistrationScreenState createState() => _RegistrationScreenState();

@@ -6,7 +6,7 @@ import './checkout_screen.dart'; // Import the new checkout screen
 class CartScreen extends StatefulWidget {
   final int userId;
 
-  const CartScreen({Key? key, required this.userId}) : super(key: key);
+  const CartScreen({super.key, required this.userId});
 
   @override
   _CartScreenState createState() => _CartScreenState();
