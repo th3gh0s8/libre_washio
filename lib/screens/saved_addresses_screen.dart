@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import './map_selection_screen.dart'; // Ensure this path is correct
 
 class SavedAddressesScreen extends StatelessWidget {
-  const SavedAddressesScreen({Key? key}) : super(key: key);
+  const SavedAddressesScreen({super.key});
 
   void _navigateToMapSelection(BuildContext context, String addressType) {
     // TODO: Replace '1' with the actual logged-in user ID from your auth system/state management

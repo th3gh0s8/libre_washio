@@ -6,7 +6,7 @@ import './order_details_screen.dart';
 class StatusBadge extends StatelessWidget {
   final String status;
 
-  const StatusBadge({Key? key, required this.status}) : super(key: key);
+  const StatusBadge({super.key, required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +69,7 @@ class StatusBadge extends StatelessWidget {
 class OrdersScreen extends StatefulWidget {
   final int userId;
 
-  const OrdersScreen({Key? key, required this.userId}) : super(key: key);
+  const OrdersScreen({super.key, required this.userId});
 
   @override
   _OrdersScreenState createState() => _OrdersScreenState();
@@ -90,13 +90,15 @@ class _OrdersScreenState extends State<OrdersScreen> {
     });
   }
 
-  void _navigateToDetails(String orderId, String stationName) {
+  // Updated to pass the display ID to the details screen
+  void _navigateToDetails(String actualOrderId, String stationName, String displayOrderId) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => OrderDetailsScreen(
-          orderId: orderId,
+          orderId: actualOrderId, // The real ID for API calls
           stationName: stationName,
+          displayOrderId: displayOrderId, // The user-facing ID
         ),
       ),
     ).then((_) => _refreshOrders());
@@ -136,11 +138,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final order = orders[index];
-              final orderId = order['order_id']?.toString() ?? 'N/A';
+              final actualOrderId = order['order_id']?.toString() ?? 'N/A';
               final stationName = order['station_name']?.toString() ?? 'Unknown Station';
               final orderDate = order['order_date']?.toString() ?? 'Unknown Date';
               final totalPrice = double.tryParse(order['total_price']?.toString() ?? '0.0') ?? 0.0;
               final orderStatus = order['order_status']?.toString() ?? 'pending';
+              final displayOrderId = (orders.length - index).toString();
 
               return Card(
                 margin: const EdgeInsets.only(bottom: 12.0),
@@ -149,13 +152,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(16.0),
-                  onTap: () => _navigateToDetails(orderId, stationName),
+                  // Pass all necessary IDs and names
+                  onTap: () => _navigateToDetails(actualOrderId, stationName, displayOrderId),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Top Row: Station Name and Price
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,15 +181,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           ],
                         ),
                         const SizedBox(height: 6),
-
-                        // Subtitle: Order ID and Date
                         Text(
-                          'ID: #$orderId • $orderDate',
+                          'ID: #$displayOrderId • $orderDate',
                           style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                         ),
                         const SizedBox(height: 16),
-
-                        // Bottom Row: Status Badge and Details chevron
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.center,

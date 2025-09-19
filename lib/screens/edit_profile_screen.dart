@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme_provider.dart';
-import '../api.dart';
 import '../session_manager.dart'; // Import the session manager
 import './actual_edit_profile_form_screen.dart';
 import './about_screen.dart';
@@ -14,10 +13,10 @@ class EditProfileScreen extends StatefulWidget {
   final Function(Map<String, dynamic> updatedUserData)? onUserDataUpdated;
 
   const EditProfileScreen({
-    Key? key,
+    super.key,
     required this.userData,
     this.onUserDataUpdated,
-  }) : super(key: key);
+  });
 
   @override
   _EditProfileScreenState createState() => _EditProfileScreenState();

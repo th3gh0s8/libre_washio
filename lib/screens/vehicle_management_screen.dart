@@ -7,9 +7,9 @@ class VehicleManagementScreen extends StatefulWidget {
   final int userId;
 
   const VehicleManagementScreen({
-    Key? key,
+    super.key,
     required this.userId,
-  }) : super(key: key);
+  });
 
   @override
   _VehicleManagementScreenState createState() => _VehicleManagementScreenState();

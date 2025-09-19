@@ -38,7 +38,7 @@ class NoLeadingZeroFormatter extends TextInputFormatter {
 }
 
 class WelcomeScreen extends StatefulWidget {
-  const WelcomeScreen({Key? key}) : super(key: key);
+  const WelcomeScreen({super.key});
 
   @override
   State<WelcomeScreen> createState() => _WelcomeScreenState();
@@ -80,7 +80,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     String phoneInput = _phoneController.text.trim();
     String currentSelectedDialCode = _selectedCountryCode.startsWith('+') 
           ? _selectedCountryCode.replaceAll(' ', '') 
-          : '+' + _selectedCountryCode.replaceAll(' ', '');
+          : '+${_selectedCountryCode.replaceAll(' ', '')}';
 
     setState(() => _isLoading = true);
     try {
@@ -129,7 +129,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         children: [
           Text(
             'Mobile number',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onBackground),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
           ),
           const SizedBox(height: 10),
           Container(

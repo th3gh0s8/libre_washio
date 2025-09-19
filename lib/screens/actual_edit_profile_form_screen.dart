@@ -6,10 +6,10 @@ class ActualEditProfileFormScreen extends StatefulWidget {
   final Function(Map<String, dynamic> updatedUserData)? onUserDataUpdated;
 
   const ActualEditProfileFormScreen({
-    Key? key,
+    super.key,
     required this.initialUserData,
     this.onUserDataUpdated,
-  }) : super(key: key);
+  });
 
   @override
   _ActualEditProfileFormScreenState createState() =>

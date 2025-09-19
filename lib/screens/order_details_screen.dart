@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 import '../api.dart';
 
 class OrderDetailsScreen extends StatefulWidget {
-  final String orderId;
+  final String orderId; // The actual ID from the database for API calls
   final String stationName;
+  final String? displayOrderId; // The user-facing sequential ID for display
 
   const OrderDetailsScreen({
-    Key? key,
+    super.key,
     required this.orderId,
     required this.stationName,
-  }) : super(key: key);
+    this.displayOrderId,
+  });
 
   @override
   _OrderDetailsScreenState createState() => _OrderDetailsScreenState();
@@ -21,6 +23,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    // The API call correctly uses the actual (database) orderId for fetching data
     final int orderIdInt = int.tryParse(widget.orderId) ?? 0;
     _orderDetailsFuture = ApiService.getOrderDetails(orderIdInt);
   }
@@ -31,7 +34,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Order Details'),
+        title: const Text('Order Details'),
         centerTitle: true,
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
@@ -74,6 +77,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   }
 
   Widget _buildHeader(ThemeData theme) {
+    // Use the displayOrderId for the UI if it was passed, otherwise fall back to the actual ID.
+    final String idToShow = widget.displayOrderId ?? widget.orderId;
+
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
@@ -99,7 +105,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Order ID: #${widget.orderId}',
+                  'Order ID: #$idToShow',
                   style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
               ],
@@ -113,7 +119,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   Widget _buildItemsCard(ThemeData theme, List<Map<String, dynamic>> items, double totalAmount) {
     return Card(
       elevation: 2.0,
-      shadowColor: theme.colorScheme.shadow.withOpacity(0.1),
+      shadowColor: theme.shadowColor.withOpacity(0.1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       child: Column(
         children: [
@@ -188,7 +194,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   Widget _buildEmptyState(ThemeData theme) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32.0),
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
