@@ -24,17 +24,25 @@ try {
         throw new Exception("Missing required order data.");
     }
 
+    // MODIFICATION 1: Extract the service ID from the first item
+    $firstServiceId = null;
+    if (isset($items[0]['id'])) { 
+        $firstServiceId = $items[0]['id'];
+    } 
+
     // Begin database transaction
     $conn->begin_transaction();
 
     try {
         // Step 1: Insert into the main order table (oder_tb)
+        // MODIFICATION 2: Updated SQL query
         $orderStmt = $conn->prepare(
-            "INSERT INTO oder_tb (user_Tb, station_Tb, amount, order_date_time, status, payment_method) VALUES (?, ?, ?, NOW(), ?, ?)"
+            "INSERT INTO oder_tb (user_Tb, station_Tb, service_Tb, amount, order_date_time, status, payment_method) VALUES (?, ?, ?, ?, NOW(), ?, ?)"
         );
         if ($orderStmt === false) throw new Exception("Prepare failed (order): " . $conn->error);
         
-        $orderStmt->bind_param("iidss", $userId, $stationId, $totalAmount, $status, $paymentMethod);
+        // MODIFICATION 3: Updated bind_param
+        $orderStmt->bind_param("iiidss", $userId, $stationId, $firstServiceId, $totalAmount, $status, $paymentMethod);
         if (!$orderStmt->execute()) throw new Exception("Execute failed (order): " . $orderStmt->error);
         
         $orderId = $conn->insert_id;
@@ -47,17 +55,17 @@ try {
         if ($itemStmt === false) throw new Exception("Prepare failed (items): " . $conn->error);
 
         foreach ($items as $item) {
-            $serviceId = $item['id'] ?? null;
+            $serviceIdForItem = $item['id'] ?? null;
             $itemName = $item['service_name'] ?? 'Unknown Item';
             $quantity = $item['quantity'] ?? null;
             $price = $item['service_price'] ?? null;
 
-            if ($serviceId === null || $quantity === null || $price === null) {
+            if ($serviceIdForItem === null || $quantity === null || $price === null) {
                 throw new Exception("Invalid item data in cart.");
             }
             
-            $itemStmt->bind_param("iiiisid", $orderId, $userId, $stationId, $serviceId, $itemName, $quantity, $price);
-            if (!$itemStmt->execute()) throw new Exception("Execute failed for item $serviceId: " . $itemStmt->error);
+            $itemStmt->bind_param("iiiisid", $orderId, $userId, $stationId, $serviceIdForItem, $itemName, $quantity, $price);
+            if (!$itemStmt->execute()) throw new Exception("Execute failed for item $serviceIdForItem: " . $itemStmt->error);
         }
         $itemStmt->close();
 
@@ -79,7 +87,7 @@ try {
         echo json_encode([
             'status' => 'success',
             'message' => 'Order placed successfully!',
-            'display_order_id' => $displayOrderId // Send the user-facing count back to the app
+            'display_order_id' => $displayOrderId 
         ]);
 
     } catch (Exception $e) {
