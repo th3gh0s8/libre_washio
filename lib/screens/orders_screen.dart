@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // Added import
 import '../api.dart';
 import './order_details_screen.dart';
 
@@ -107,6 +108,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final currencyFormatter = NumberFormat.currency(symbol: '\$'); // Added formatter
 
     return Scaffold(
       appBar: AppBar(
@@ -172,7 +174,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                             ),
                             const SizedBox(width: 16),
                             Text(
-                              '\$${totalPrice.toStringAsFixed(2)}',
+                              currencyFormatter.format(totalPrice), // Used formatter
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: theme.colorScheme.primary,

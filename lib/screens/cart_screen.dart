@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart'; // Added import
 import '../cart_provider.dart';
 import './checkout_screen.dart'; // Import the new checkout screen
 
@@ -27,6 +28,7 @@ class _CartScreenState extends State<CartScreen> {
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
     final theme = Theme.of(context);
+    final currencyFormatter = NumberFormat.currency(symbol: '\$'); // Added formatter
 
     return Scaffold(
       appBar: AppBar(
@@ -47,12 +49,15 @@ class _CartScreenState extends State<CartScreen> {
                     itemBuilder: (context, index) {
                       final item = cart.items[index];
                       final itemName = item['service_name']?.toString() ?? 'Service';
-                      final itemPrice = (item['service_price'] as num?)?.toStringAsFixed(2) ?? '0.00';
+                      // final itemPrice = (item['service_price'] as num?)?.toStringAsFixed(2) ?? '0.00'; // Removed
                       final quantity = item['quantity'] as int? ?? 1;
+
+                      final priceValue = (item['service_price'] as num?)?.toDouble() ?? 0.0;
+                      final formattedItemPrice = currencyFormatter.format(priceValue);
 
                       return ListTile(
                         title: Text(itemName),
-                        subtitle: Text('\$$itemPrice x $quantity'),
+                        subtitle: Text('$formattedItemPrice x $quantity'), // Updated subtitle
                         trailing: IconButton(
                           icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
                           onPressed: () {
@@ -74,7 +79,7 @@ class _CartScreenState extends State<CartScreen> {
                   style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  '\$${cart.totalPrice.toStringAsFixed(2)}',
+                  currencyFormatter.format(cart.totalPrice), // Updated total price display
                    style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.primary,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // Added import
 import '../api.dart';
 
 class OrderDetailsScreen extends StatefulWidget {
@@ -102,6 +103,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                   widget.stationName,
                   style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 2, // Added for station name potentially
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -117,6 +119,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   }
 
   Widget _buildItemsCard(ThemeData theme, List<Map<String, dynamic>> items, double totalAmount) {
+    final currencyFormatter = NumberFormat.currency(symbol: '\$'); // Added
+
     return Card(
       elevation: 2.0,
       shadowColor: theme.shadowColor.withOpacity(0.1),
@@ -132,13 +136,22 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               final itemName = item['item']?.toString() ?? 'Unknown Item';
               final itemPrice = double.tryParse(item['price']?.toString() ?? '0.0') ?? 0.0;
               final quantity = int.tryParse(item['item_quantity']?.toString() ?? '1') ?? 1;
+              final formattedItemTotal = currencyFormatter.format(itemPrice * quantity); // Format here
+
               return ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                title: Text(itemName, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500)),
+                title: Text(
+                  itemName, 
+                  style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+                  maxLines: 2, // Allow more lines for item name
+                  overflow: TextOverflow.ellipsis,
+                ),
                 subtitle: Text('Quantity: $quantity'),
                 trailing: Text(
-                  '\$${(itemPrice * quantity).toStringAsFixed(2)}',
+                  formattedItemTotal, // Use formatted value
                   style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               );
             },
@@ -152,11 +165,13 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               children: [
                 Text('Total Paid', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                 Text(
-                  '\$${totalAmount.toStringAsFixed(2)}',
+                  currencyFormatter.format(totalAmount), // Format here
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.primary,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
