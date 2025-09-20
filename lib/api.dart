@@ -398,6 +398,7 @@ class ApiService {
   static Future<Map<String, dynamic>> createOrder({
     required int userId,
     required List<Map<String, dynamic>> items,
+    required String paymentMethod, // Added paymentMethod parameter
   }) async {
     final url = Uri.parse('${baseUrl}create_order.php');
     if (items.isEmpty) {
@@ -421,7 +422,7 @@ class ApiService {
           'station_id': stationId,
           'items': items,
           'total_amount': totalAmount,
-          'payment_method': 'cash_on_delivery',
+          'payment_method': paymentMethod, // Use the paymentMethod parameter
         }),
       );
 
