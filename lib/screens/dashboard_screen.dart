@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart'; // Added import
 import '../cart_provider.dart';
 import '../api.dart'; 
 import 'edit_profile_screen.dart'; 
@@ -243,6 +244,7 @@ class DashboardScreenState extends State<DashboardScreen> {
   Widget _buildServicesDisplay(BuildContext context, List<Map<String, dynamic>> availableServices, Map<String, dynamic> servicesStation, {String? errorLoadingServices}) {
     final theme = Theme.of(context);
     final cart = Provider.of<CartProvider>(context, listen: false);
+    final currencyFormatter = NumberFormat.currency(symbol: '\$'); // Added
     String stationName = servicesStation['name']?.toString() ?? 'Nearby Station';
 
     if (errorLoadingServices != null) {
@@ -274,7 +276,8 @@ class DashboardScreenState extends State<DashboardScreen> {
         // Directly generate List<Widget> for services
         ...availableServices.take(displayedItemCountLimit).map((service) {
           final serviceName = service['service_name']?.toString() ?? 'Unnamed Service';
-          final servicePrice = service['service_price'] != null ? '\$${(service['service_price'] as num).toStringAsFixed(2)}' : 'Price N/A';
+          final priceValue = (service['service_price'] as num?)?.toDouble() ?? 0.0;
+          final formattedServicePrice = currencyFormatter.format(priceValue);
           
           return Card(
             margin: const EdgeInsets.symmetric(vertical: 4.0),
@@ -287,7 +290,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                 maxLines: 1,
               ),
               subtitle: Text(
-                servicePrice, 
+                formattedServicePrice, 
                 style: TextStyle(color: theme.colorScheme.primary), 
                 overflow: TextOverflow.ellipsis, 
                 maxLines: 1,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart'; // Added import
 import '../api.dart';
 import '../cart_provider.dart';
 
@@ -137,6 +138,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
     final stationName = _selectedStation!['name']?.toString() ?? 'Station';
     final theme = Theme.of(context);
+    final currencyFormatter = NumberFormat.currency(symbol: '\$'); // Added formatter
 
     Widget servicesContent;
     if (_isLoadingServices) {
@@ -146,7 +148,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           child: Padding(padding: const EdgeInsets.all(16.0), child: Text(_serviceError!, style: const TextStyle(color: Colors.red, fontSize: 16), textAlign: TextAlign.center)));
     } else if (_servicesForSelectedStation.isEmpty) {
       servicesContent = const Center(
-          child: Padding(padding: EdgeInsets.all(16.0), child: Text('No services listed for this station.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
+          child: Padding(padding: const EdgeInsets.all(16.0), child: Text('No services listed for this station.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
     } else {
       servicesContent = ListView.separated(
         shrinkWrap: true, 
@@ -161,7 +163,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
         itemBuilder: (context, index) {
           final service = _servicesForSelectedStation[index];
           final serviceName = service['service_name']?.toString() ?? 'Unnamed Service';
-          final servicePrice = service['service_price'] != null ? '\$${(service['service_price'] as num).toStringAsFixed(2)}' : 'Price N/A';
+          final priceValue = (service['service_price'] as num?)?.toDouble() ?? 0.0;
+          final formattedServicePrice = currencyFormatter.format(priceValue);
           final estimatedTime = _formatEstimatedTime(service['estimated_time']?.toString());
 
           return Padding(
@@ -176,20 +179,26 @@ class _ServicesScreenState extends State<ServicesScreen> {
                       Text(
                         serviceName, 
                         style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                        maxLines: 2, // Added maxLines
+                        overflow: TextOverflow.ellipsis, // Added overflow
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        servicePrice,
+                        formattedServicePrice, // Used formatted price
                         style: theme.textTheme.titleSmall?.copyWith(
                           color: theme.colorScheme.primary, 
                           fontWeight: FontWeight.w600
                         ),
+                        maxLines: 1, // Added maxLines
+                        overflow: TextOverflow.ellipsis, // Added overflow
                       ),
                       if (estimatedTime != 'N/A') ...[
                         const SizedBox(height: 4),
                         Text(
                           'Time: $estimatedTime',
                           style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                          maxLines: 1, // Added maxLines
+                          overflow: TextOverflow.ellipsis, // Added overflow
                         ),
                       ],
                     ],
@@ -201,7 +210,6 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   child: InkWell(
                     onTap: () {
                       final cart = Provider.of<CartProvider>(context, listen: false);
-                      // Create a new map with the service data and the station ID
                       final itemToAdd = {
                         ...service,
                         'station_id': _selectedStation!['id'],
