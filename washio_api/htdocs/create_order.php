@@ -24,31 +24,25 @@ try {
         throw new Exception("Missing required order data.");
     }
 
-    // MODIFICATION 1: Extract the service ID from the first item
     $firstServiceId = null;
     if (isset($items[0]['id'])) { 
         $firstServiceId = $items[0]['id'];
     } 
 
-    // Begin database transaction
     $conn->begin_transaction();
 
     try {
-        // Step 1: Insert into the main order table (oder_tb)
-        // MODIFICATION 2: Updated SQL query
         $orderStmt = $conn->prepare(
             "INSERT INTO oder_tb (user_Tb, station_Tb, service_Tb, amount, order_date_time, status, payment_method) VALUES (?, ?, ?, ?, NOW(), ?, ?)"
         );
         if ($orderStmt === false) throw new Exception("Prepare failed (order): " . $conn->error);
         
-        // MODIFICATION 3: Updated bind_param
         $orderStmt->bind_param("iiidss", $userId, $stationId, $firstServiceId, $totalAmount, $status, $paymentMethod);
         if (!$orderStmt->execute()) throw new Exception("Execute failed (order): " . $orderStmt->error);
         
-        $orderId = $conn->insert_id;
+        $orderId = $conn->insert_id; // This is the actual_order_id
         $orderStmt->close();
 
-        // Step 2: Insert each item from the cart
         $itemStmt = $conn->prepare(
             "INSERT INTO oder_items (oderTb, userTb, stationTb, serviceTb, item, item_quantity, price) VALUES (?, ?, ?, ?, ?, ?, ?)"
         );
@@ -81,13 +75,31 @@ try {
         $displayOrderId = $countRow['order_count'];
         $countStmt->close();
 
-        // If all queries were successful, commit the transaction
+        // Step 4: Get station name - CORRECTED TABLE NAME
+        $stationName = "Unknown Station"; // Default value
+        $stationStmt = $conn->prepare("SELECT name FROM stations WHERE id = ?"); // Changed station_tb to stations
+        if ($stationStmt) {
+            $stationStmt->bind_param("i", $stationId);
+            if ($stationStmt->execute()) {
+                $stationResult = $stationStmt->get_result();
+                if ($stationRow = $stationResult->fetch_assoc()) {
+                    $stationName = $stationRow['name'];
+                }
+            }
+            $stationStmt->close();
+        } else { // Handle prepare failure for station name query
+            // Optionally log an error here, but continue with default station name
+            // error_log("Failed to prepare station name query: " . $conn->error);
+        }
+
         $conn->commit();
 
         echo json_encode([
             'status' => 'success',
             'message' => 'Order placed successfully!',
-            'display_order_id' => $displayOrderId 
+            'actual_order_id' => $orderId, 
+            'display_order_id' => $displayOrderId,
+            'station_name' => $stationName 
         ]);
 
     } catch (Exception $e) {
