@@ -49,7 +49,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (response['status'] == 'success') {
         cart.clearCart();
         
-        // ADDED FOR DEBUGGING:
         print('DEBUG: API createOrder response: $response'); 
 
         final actualOrderId = response['actual_order_id']?.toString();
@@ -63,7 +62,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         if (actualOrderId != null && stationName != null) {
           _showOrderSuccessDialog(successMessage, actualOrderId, displayOrderId ?? actualOrderId, stationName);
         } else {
-          // ADDED FOR DEBUGGING:
           print('DEBUG: Navigation details missing. actualOrderId: $actualOrderId, stationName: $stationName, Full response: $response');
           _showError('Order placed, but could not retrieve all details for navigation.');
             showDialog(
@@ -119,8 +117,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             TextButton(
               child: const Text('View Details'),
               onPressed: () {
-                Navigator.of(ctx).pop(); 
-                Navigator.pushReplacement( 
+                Navigator.of(ctx).pop(); // Close the dialog
+
+                // First, navigate back to the root screen (AppShell)
+                Navigator.of(context).popUntil((route) => route.isFirst); 
+
+                // Then, push OrderDetailsScreen onto the AppShell
+                Navigator.push( 
                   context,
                   MaterialPageRoute(
                     builder: (context) => OrderDetailsScreen(
