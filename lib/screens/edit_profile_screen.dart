@@ -7,6 +7,8 @@ import './about_screen.dart';
 import './welcome_screen.dart';
 import './saved_addresses_screen.dart';
 import './vehicle_management_screen.dart';
+import './privacy_policy_screen.dart'; // Added import
+import './terms_of_service_screen.dart'; // Added import
 
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -221,9 +223,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             leading: const Icon(Icons.privacy_tip_outlined),
             title: const Text('Privacy Policy'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Privacy Policy would open here.')),
+            onTap: () { // MODIFIED onTap
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()),
               );
             },
           ),
@@ -231,9 +234,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             leading: const Icon(Icons.description_outlined),
             title: const Text('Terms of Service'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Terms of Service would open here.')),
+            onTap: () { // MODIFIED onTap
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TermsOfServiceScreen()),
               );
             },
           ),
