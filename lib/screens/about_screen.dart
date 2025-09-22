@@ -6,7 +6,7 @@ class AboutScreen extends StatelessWidget {
   // You can fetch these dynamically later using package_info_plus or other methods
   static const String _appName = 'Washio'; 
   static const String _appVersion = '1.0.0'; // Placeholder
-  static const String _developerName = 'Washio Development Team'; // Placeholder
+  static const String _developerName = 'Powersoft Pvt Ltd'; // Changed
   // static const String _privacyPolicyUrl = 'YOUR_PRIVACY_POLICY_URL_HERE';
   // static const String _termsOfServiceUrl = 'YOUR_TERMS_OF_SERVICE_URL_HERE';
 
@@ -80,7 +80,7 @@ class AboutScreen extends StatelessWidget {
                 applicationName: _appName,
                 applicationVersion: _appVersion,
                 // applicationIcon: Image.asset('assets/images/app_icon.png', height: 40), // Optional
-                applicationLegalese: '© ${DateTime.now().year} $_developerName',
+                applicationLegalese: '© ${DateTime.now().year} Powersoft Pvt Ltd', // Changed
               );
             }
           ),
@@ -88,7 +88,7 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: 40),
           Center(
             child: Text(
-              '© ${DateTime.now().year} $_developerName. All rights reserved.',
+              '© ${DateTime.now().year} Powersoft Pvt Ltd. All rights reserved.', // Changed
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),
