@@ -5,11 +5,11 @@ class AboutUsScreen extends StatelessWidget {
 
   Widget _buildParagraph(BuildContext context, String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0), // MODIFIED padding
+      padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         text,
-        style: Theme.of(context).textTheme.bodyLarge?.copyWith( // MODIFIED style
-              height: 1.5, // Added line height for consistency
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith( // Sized down
+              height: 1.5,
             ),
         textAlign: TextAlign.justify,
       ),

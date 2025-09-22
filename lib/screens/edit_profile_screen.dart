@@ -134,7 +134,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Account'),
+        title: const Text('Profile'),
         automaticallyImplyLeading: false,
         actions: [
           IconButton(

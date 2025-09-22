@@ -5,12 +5,12 @@ class TermsOfServiceScreen extends StatelessWidget {
 
   Widget _buildSectionTitle(BuildContext context, String title) {
     return Padding(
-      padding: const EdgeInsets.only(top: 24.0, bottom: 8.0), // Increased top padding
+      padding: const EdgeInsets.only(top: 24.0, bottom: 8.0),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+        style: Theme.of(context).textTheme.titleMedium?.copyWith( // Sized down
               fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary, // Added primary color
+              color: Theme.of(context).colorScheme.primary,
             ),
       ),
     );
@@ -21,8 +21,8 @@ class TermsOfServiceScreen extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         text,
-        style: Theme.of(context).textTheme.bodyLarge?.copyWith( // Changed to bodyLarge
-              height: 1.5, // Added line height
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith( // Sized down
+              height: 1.5,
             ),
         textAlign: TextAlign.justify,
       ),
