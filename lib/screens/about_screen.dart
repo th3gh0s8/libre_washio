@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import './privacy_policy_screen.dart'; // Added import
+import './terms_of_service_screen.dart'; // Added import
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -6,7 +8,7 @@ class AboutScreen extends StatelessWidget {
   // You can fetch these dynamically later using package_info_plus or other methods
   static const String _appName = 'Washio'; 
   static const String _appVersion = '1.0.0'; // Placeholder
-  static const String _developerName = 'Powersoft Pvt Ltd'; // Changed
+  static const String _developerName = 'Powersoft Pvt Ltd';
   // static const String _privacyPolicyUrl = 'YOUR_PRIVACY_POLICY_URL_HERE';
   // static const String _termsOfServiceUrl = 'YOUR_TERMS_OF_SERVICE_URL_HERE';
 
@@ -47,15 +49,43 @@ class AboutScreen extends StatelessWidget {
           _buildInfoTile(context, Icons.people_outline, 'Developed by', _developerName),
           
           const SizedBox(height: 24),
+          _buildSectionTitle(context, 'About Us'),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Washio is a smart and convenient platform that connects vehicle owners with trusted car wash service stations, making it easier than ever to keep your car clean. Just like booking a ride, you can now book a car wash anytime, anywhere with a few taps on your phone.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.justify, 
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Our mission is to bring efficiency, transparency, and convenience to car care by providing a seamless experience for both customers and service stations. With Washio, you save time, enjoy reliable service, and ensure your car gets the care it deserves.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.justify, 
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Washio is proudly developed and maintained by Powersoft (Pvt) Ltd, a leading technology company dedicated to creating innovative digital solutions for everyday needs.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.justify, 
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
           _buildSectionTitle(context, 'Legal & More'),
           _buildLinkTile(
             context, 
             Icons.shield_outlined, 
             'Privacy Policy',
             () {
-              // _launchUrl(_privacyPolicyUrl); // Uncomment and add url_launcher if you have a URL
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Privacy Policy link would open here.')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()),
               );
             }
           ),
@@ -64,9 +94,9 @@ class AboutScreen extends StatelessWidget {
             Icons.description_outlined, 
             'Terms of Service',
             () {
-              // _launchUrl(_termsOfServiceUrl); // Uncomment and add url_launcher if you have a URL
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Terms of Service link would open here.')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TermsOfServiceScreen()),
               );
             }
           ),
@@ -90,7 +120,7 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: 40),
           Center(
             child: Text(
-              '© ${DateTime.now().year} Powersoft Pvt Ltd. All rights reserved.', // Changed
+              '© ${DateTime.now().year} Powersoft Pvt Ltd. All rights reserved.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall,
             ),
