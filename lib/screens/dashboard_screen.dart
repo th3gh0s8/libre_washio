@@ -44,9 +44,9 @@ class AppShellState extends State<AppShell> {
   void _initializeScreens() {
     _screens = [
       DashboardScreen(userData: _currentActionUserData), // Home (Index 0)
-      const ServicesScreen(), // Services (Index 1)
-      OrdersScreen(userId: widget.userData['id'] as int), // Orders (Index 2, formerly 3)
-      EditProfileScreen( // Account (Index 3, formerly 4)
+      const ServicesScreen(), // Services (Index 1) <-- RESTORED
+      OrdersScreen(userId: widget.userData['id'] as int), // Orders (Index 2)
+      EditProfileScreen( // Account (Index 3)
         userData: _currentActionUserData, 
         onUserDataUpdated: _handleUserDataUpdateFromProfile,
       ),
@@ -88,7 +88,6 @@ class AppShellState extends State<AppShell> {
             icon: Icon(Icons.miscellaneous_services),
             label: 'Services',
           ),
-          // "Browse" item removed
           BottomNavigationBarItem(
             icon: Icon(Icons.receipt_long),
             label: 'Orders',
@@ -270,7 +269,7 @@ class DashboardScreenState extends State<DashboardScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Text(
-            "Services from $stationName",
+            stationName, // <-- CHANGED
             style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
         ),
@@ -401,5 +400,3 @@ class DashboardScreenState extends State<DashboardScreen> {
     );
   }
 }
-
-
