@@ -5,11 +5,12 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
   Widget _buildSectionTitle(BuildContext context, String title) {
     return Padding(
-      padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
+      padding: const EdgeInsets.only(top: 24.0, bottom: 8.0), // Increased top padding
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.primary, // Added primary color
             ),
       ),
     );
@@ -20,7 +21,9 @@ class PrivacyPolicyScreen extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         text,
-        style: Theme.of(context).textTheme.bodyMedium,
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith( // Changed to bodyLarge
+              height: 1.5, // Added line height
+            ),
         textAlign: TextAlign.justify,
       ),
     );

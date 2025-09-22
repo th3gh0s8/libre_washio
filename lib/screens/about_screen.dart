@@ -96,11 +96,11 @@ class AboutScreen extends StatelessWidget {
 
   Widget _buildSectionTitle(BuildContext context, String title) {
     return Padding(
-      padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
+      padding: const EdgeInsets.only(top: 24.0, bottom: 8.0), // MODIFIED padding
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.bold, // MODIFIED fontWeight
               color: Theme.of(context).colorScheme.primary,
             ),
       ),

@@ -5,10 +5,12 @@ class AboutUsScreen extends StatelessWidget {
 
   Widget _buildParagraph(BuildContext context, String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0), // Added a bit more bottom padding for paragraphs
+      padding: const EdgeInsets.only(bottom: 8.0), // MODIFIED padding
       child: Text(
         text,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 15), // Slightly larger font
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith( // MODIFIED style
+              height: 1.5, // Added line height for consistency
+            ),
         textAlign: TextAlign.justify,
       ),
     );
@@ -20,7 +22,7 @@ class AboutUsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('About Us'),
       ),
-      body: ListView( // Changed to ListView for consistency and potential future additions
+      body: ListView( 
         padding: const EdgeInsets.all(16.0),
         children: <Widget>[
           _buildParagraph(
