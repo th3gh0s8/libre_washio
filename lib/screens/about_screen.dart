@@ -70,6 +70,7 @@ class AboutScreen extends StatelessWidget {
               );
             }
           ),
+          /*
           _buildLinkTile(
             context, 
             Icons.code_outlined, 
@@ -80,10 +81,11 @@ class AboutScreen extends StatelessWidget {
                 applicationName: _appName,
                 applicationVersion: _appVersion,
                 // applicationIcon: Image.asset('assets/images/app_icon.png', height: 40), // Optional
-                applicationLegalese: '© ${DateTime.now().year} Powersoft Pvt Ltd', // Changed
+                applicationLegalese: '© ${DateTime.now().year} Powersoft Pvt Ltd',
               );
             }
           ),
+          */
 
           const SizedBox(height: 40),
           Center(
