@@ -110,7 +110,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           child: Padding(padding: const EdgeInsets.all(16.0), child: Text(_stationError!, style: const TextStyle(color: Colors.red, fontSize: 16), textAlign: TextAlign.center)));
     }
     if (_stations.isEmpty) {
-      return const Center(child: Padding(padding: EdgeInsets.all(16.0), child: Text('No service stations found.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
+      return const Center(child: Padding(padding: const EdgeInsets.all(16.0), child: Text('No service stations found.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
     }
     return ListView.builder(
       itemCount: _stations.length,
@@ -142,7 +142,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
     Widget servicesContent;
     if (_isLoadingServices) {
-      servicesContent = const Center(child: Padding(padding: EdgeInsets.all(20.0), child: CircularProgressIndicator()));
+      servicesContent = const Center(child: Padding(padding: const EdgeInsets.all(20.0), child: CircularProgressIndicator()));
     } else if (_serviceError != null) {
       servicesContent = Center(
           child: Padding(padding: const EdgeInsets.all(16.0), child: Text(_serviceError!, style: const TextStyle(color: Colors.red, fontSize: 16), textAlign: TextAlign.center)));
@@ -242,7 +242,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                       child: const SizedBox(
                         width: 40, 
                         height: 40,
-                        child: Icon(Icons.add, color: Colors.white, size: 24),
+                        child: Icon(Icons.add_shopping_cart, color: Colors.white, size: 22),
                       ),
                     ),
                   ),
