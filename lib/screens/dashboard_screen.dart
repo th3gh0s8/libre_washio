@@ -44,10 +44,9 @@ class AppShellState extends State<AppShell> {
   void _initializeScreens() {
     _screens = [
       DashboardScreen(userData: _currentActionUserData), // Home (Index 0)
-      const ServicesScreen(), // Services (Index 1)
-      const BrowseScreen(), // Browse (Index 2)
-      OrdersScreen(userId: widget.userData['id'] as int), // Orders (Index 3)
-      EditProfileScreen( // Account (Index 4)
+      const ServicesScreen(), // Services (Index 1) <-- RESTORED
+      OrdersScreen(userId: widget.userData['id'] as int), // Orders (Index 2)
+      EditProfileScreen( // Account (Index 3)
         userData: _currentActionUserData, 
         onUserDataUpdated: _handleUserDataUpdateFromProfile,
       ),
@@ -69,6 +68,11 @@ class AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    // Add this check to prevent an out-of-bounds error during hot restart
+    if (_selectedIndex >= _screens.length) {
+      _selectedIndex = 0;
+    }
+
     return Scaffold(
       body: IndexedStack( 
         index: _selectedIndex,
@@ -83,10 +87,6 @@ class AppShellState extends State<AppShell> {
           BottomNavigationBarItem(
             icon: Icon(Icons.miscellaneous_services),
             label: 'Services',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Browse',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.receipt_long),
@@ -269,7 +269,7 @@ class DashboardScreenState extends State<DashboardScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Text(
-            "Services from $stationName",
+            stationName, // <-- CHANGED
             style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
         ),
@@ -396,25 +396,6 @@ class DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// --- Placeholder Screens (ServicesScreen has been moved to its own file) ---
-
-class BrowseScreen extends StatelessWidget {
-  const BrowseScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Browse'),
-        automaticallyImplyLeading: false,
-      ),
-      body: const Center(
-        child: Text('Browse Screen - Coming Soon!', style: TextStyle(fontSize: 18)),
       ),
     );
   }
