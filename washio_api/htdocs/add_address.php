@@ -88,7 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             if ($stmt_update === false) throw new Exception('Prepare failed (update): ' . $conn->error);
             
-            $stmt_update->bind_param("ssddsi", $addressLine1, $addressLine2, $longitude, $latitude, $mapAddress, $existingId);
+            // --- CHANGE HERE ---
+            $stmt_update->bind_param("sssssi", $addressLine1, $addressLine2, $longitude, $latitude, $mapAddress, $existingId);
             if ($stmt_update->execute()) {
                 echo json_encode(['status' => 'success', 'message' => "$addressType address updated successfully."]);
             } else {
@@ -101,7 +102,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             if ($stmt_insert === false) throw new Exception('Prepare failed (insert): ' . $conn->error);
             
-            $stmt_insert->bind_param("isssdds", $userId, $addressType, $addressLine1, $addressLine2, $longitude, $latitude, $mapAddress);
+            // --- AND CHANGE HERE ---
+            $stmt_insert->bind_param("issssss", $userId, $addressType, $addressLine1, $addressLine2, $longitude, $latitude, $mapAddress);
             if ($stmt_insert->execute()) {
                 echo json_encode(['status' => 'success', 'message' => 'New address saved successfully.']);
             } else {
