@@ -5,7 +5,9 @@ import '../api.dart';
 import '../cart_provider.dart';
 
 class ServicesScreen extends StatefulWidget {
-  const ServicesScreen({super.key});
+  final Map<String, dynamic>? stationData;
+
+  const ServicesScreen({super.key, this.stationData});
 
   @override
   _ServicesScreenState createState() => _ServicesScreenState();
@@ -26,7 +28,11 @@ class _ServicesScreenState extends State<ServicesScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchStations();
+    if (widget.stationData != null) {
+      _fetchServicesForStation(widget.stationData!); 
+    } else {
+      _fetchStations();
+    }
   }
 
   Future<void> _fetchStations() async {
@@ -300,20 +306,19 @@ class _ServicesScreenState extends State<ServicesScreen> {
   @override
   Widget build(BuildContext context) {
     bool isViewingStationDetails = _selectedStation != null;
+    bool wasNavigatedToWithData = widget.stationData != null;
 
     return Scaffold(
       appBar: AppBar(
-        leading: null, 
         title: Text(isViewingStationDetails ? '' : 'Service Stations'), 
-        automaticallyImplyLeading: !isViewingStationDetails, 
         actions: [
-          if (!isViewingStationDetails) 
+          if (!isViewingStationDetails)
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: _isLoadingStations ? null : _fetchStations,
               tooltip: 'Refresh Stations',
             ),
-          if (isViewingStationDetails)
+          if (isViewingStationDetails && !wasNavigatedToWithData)
             IconButton(
               icon: const Icon(Icons.close), 
               onPressed: _clearSelectedStation,

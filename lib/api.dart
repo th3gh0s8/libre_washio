@@ -440,4 +440,24 @@ class ApiService {
       throw Exception('Error creating order: $e');
     }
   }
+  
+  static Future<List<Map<String, dynamic>>> getUserAddresses(int userId) async {
+    final url = Uri.parse('${baseUrl}add_address.php?user_id=$userId');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final decodedResponse = jsonDecode(response.body) as Map<String, dynamic>;
+        if (decodedResponse['status'] == 'success') {
+          final List<dynamic> addressDataList = decodedResponse['data'] as List<dynamic>;
+          return addressDataList.map((addressData) => addressData as Map<String, dynamic>).toList();
+        } else {
+          throw Exception('Failed to load addresses: ${decodedResponse['message']}');
+        }
+      } else {
+        throw Exception('Failed to load addresses. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching addresses: $e');
+    }
+  }
 }

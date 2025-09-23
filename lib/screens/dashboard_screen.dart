@@ -206,6 +206,14 @@ class DashboardScreenState extends State<DashboardScreen> {
       });
     }
   }
+  void _navigateToStationServices(Map<String, dynamic> stationData) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ServicesScreen(stationData: stationData),
+      ),
+    );
+  }
 
   String _getShortenedAddress(String? fullAddress) {
     if (fullAddress == null || fullAddress.isEmpty) return "Set your location";
@@ -244,7 +252,7 @@ class DashboardScreenState extends State<DashboardScreen> {
   Widget _buildServicesDisplay(BuildContext context, List<Map<String, dynamic>> availableServices, Map<String, dynamic> servicesStation, {String? errorLoadingServices}) {
     final theme = Theme.of(context);
     final cart = Provider.of<CartProvider>(context, listen: false);
-    final currencyFormatter = NumberFormat.currency(symbol: '\$'); // Added
+    final currencyFormatter = NumberFormat.currency(symbol: '\$');
     String stationName = servicesStation['name']?.toString() ?? 'Nearby Station';
 
     if (errorLoadingServices != null) {
@@ -269,11 +277,10 @@ class DashboardScreenState extends State<DashboardScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Text(
-            stationName, // <-- CHANGED
+            stationName,
             style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
         ),
-        // Directly generate List<Widget> for services
         ...availableServices.take(displayedItemCountLimit).map((service) {
           final serviceName = service['service_name']?.toString() ?? 'Unnamed Service';
           final priceValue = (service['service_price'] as num?)?.toDouble() ?? 0.0;
@@ -295,37 +302,52 @@ class DashboardScreenState extends State<DashboardScreen> {
                 overflow: TextOverflow.ellipsis, 
                 maxLines: 1,
               ),
-              trailing: IconButton(
-                icon: const Icon(Icons.add_shopping_cart),
-                padding: EdgeInsets.zero, 
-                constraints: const BoxConstraints(), 
-                tooltip: 'Add to cart',
-                onPressed: () {
-                  final itemToAdd = {
-                    ...service,
-                    'station_id': servicesStation['id'], 
-                  };
-                  cart.addItem(itemToAdd);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('$serviceName added to cart'),
-                      duration: const Duration(seconds: 2),
-                      action: SnackBarAction(label: 'UNDO', onPressed: () => cart.removeItem(itemToAdd)),
+              trailing: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    final itemToAdd = {
+                      ...service,
+                      'station_id': servicesStation['id'], 
+                    };
+                    cart.addItem(itemToAdd);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('$serviceName added to cart'),
+                        duration: const Duration(seconds: 2),
+                        action: SnackBarAction(label: 'UNDO', onPressed: () => cart.removeItem(itemToAdd)),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(20), 
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      shape: BoxShape.circle,
+                       boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 3,
+                            offset: const Offset(1,1),
+                          )
+                        ]
                     ),
-                  );
-                },
+                    child: const SizedBox(
+                      width: 40, 
+                      height: 40,
+                      child: Icon(Icons.add_shopping_cart, color: Colors.white, size: 22),
+                    ),
+                  ),
+                ),
               ),
             ),
           );
-        }), // End of .map()
-
+        }),
         if (availableServices.length > displayedItemCountLimit) 
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: TextButton(
-              onPressed: () {
-                // print("Navigate to full services screen/tab for station ${servicesStation['id']}");
-              },
+              onPressed: () => _navigateToStationServices(servicesStation),
               child: const Text("View All Services..."),
             ),
           ),
