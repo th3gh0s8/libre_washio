@@ -88,7 +88,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void _navigateToSavedAddressesScreen() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const SavedAddressesScreen()),
+      MaterialPageRoute(builder: (context) => SavedAddressesScreen(userId: _currentUserId)), // MODIFIED
     );
   }
 
