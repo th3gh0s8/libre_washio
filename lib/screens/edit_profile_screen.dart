@@ -88,7 +88,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void _navigateToSavedAddressesScreen() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => SavedAddressesScreen(userId: _currentUserId)), // MODIFIED
+      MaterialPageRoute(builder: (context) => SavedAddressesScreen(userId: _currentUserId)),
     );
   }
 
@@ -180,16 +180,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             onTap: _navigateToActualEditProfile,
           ),
           ListTile(
-            leading: const Icon(Icons.lock_outline),
-            title: const Text('Change Password'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Change Password screen would open here.')),
-              );
-            },
-          ),
-          ListTile(
             leading: const Icon(Icons.location_on_outlined),
             title: const Text('Saved Addresses'),
             trailing: const Icon(Icons.chevron_right),
@@ -200,17 +190,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             title: const Text('My Vehicles'),
             trailing: const Icon(Icons.chevron_right),
             onTap: _navigateToVehicleManagementScreen, 
-          ),
-          _buildSectionTitle(context, "App Settings"),
-          ListTile(
-            leading: const Icon(Icons.notifications_outlined),
-            title: const Text('Notifications'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Notification settings would open here.')),
-              );
-            },
           ),
           _buildSectionTitle(context, "Support & Legal"),
           ListTile(
@@ -223,7 +202,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             leading: const Icon(Icons.privacy_tip_outlined),
             title: const Text('Privacy Policy'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () { // MODIFIED onTap
+            onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()),
@@ -234,7 +213,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             leading: const Icon(Icons.description_outlined),
             title: const Text('Terms of Service'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () { // MODIFIED onTap
+            onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const TermsOfServiceScreen()),
