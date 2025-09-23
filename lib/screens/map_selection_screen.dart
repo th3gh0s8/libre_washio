@@ -146,14 +146,6 @@ class MapSelectionScreenState extends State<MapSelectionScreen> {
   Future<void> _sendAddressToApi(Placemark place, LatLng coordinates) async {
     if (!mounted) return;
 
-    if (!_isProcessingLocation && mounted) {
-        setState(() => _isProcessingLocation = true);
-    }
-
-    String addressLine1 = place.street ?? place.name ?? '';
-    String addressLine2 = place.subLocality ?? (place.thoroughfare != place.street ? place.thoroughfare : '') ?? '';
-    if (addressLine1.isEmpty) addressLine1 = place.locality ?? 'N/A';
-
     String mapAddress = [
       place.name,
       place.street,
@@ -164,7 +156,20 @@ class MapSelectionScreenState extends State<MapSelectionScreen> {
       place.country
     ].where((s) => s != null && s.isNotEmpty).toSet().join(', ');
     if (mapAddress.isEmpty) mapAddress = "Selected Location at ${coordinates.latitude.toStringAsFixed(5)}, ${coordinates.longitude.toStringAsFixed(5)}";
-    
+
+    if (widget.addressType == 'DisplayLocation') {
+      Navigator.pop(context, mapAddress);
+      return;
+    }
+
+    if (!_isProcessingLocation && mounted) {
+        setState(() => _isProcessingLocation = true);
+    }
+
+    String addressLine1 = place.street ?? place.name ?? '';
+    String addressLine2 = place.subLocality ?? (place.thoroughfare != place.street ? place.thoroughfare : '') ?? '';
+    if (addressLine1.isEmpty) addressLine1 = place.locality ?? 'N/A';
+
     try {
       final response = await ApiService.saveUserLocation(
         userId: widget.userId,
