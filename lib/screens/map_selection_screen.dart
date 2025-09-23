@@ -1,12 +1,11 @@
 import 'dart:async';
-import 'dart:convert'; // For jsonEncode/Decode
-// For debugPrint
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:http/http.dart' as http; // For HTTP requests
+import '../api.dart';
 
 class MapSelectionScreen extends StatefulWidget {
   final String addressType;
@@ -30,7 +29,7 @@ class MapSelectionScreenState extends State<MapSelectionScreen> {
   bool _locationFeaturesEnabled = false;
   bool _isMapCenteredOnUser = false;
   bool _isProgrammaticMove = false;
-  bool _isProcessingLocation = false; // Renamed from _isSaving
+  bool _isProcessingLocation = false;
 
   static final CameraPosition _kInitialNeutralView = CameraPosition(
     target: const LatLng(20.5937, 78.9629), 
@@ -145,9 +144,8 @@ class MapSelectionScreenState extends State<MapSelectionScreen> {
   }
 
   Future<void> _sendAddressToApi(Placemark place, LatLng coordinates) async {
-    if (!mounted) return; // Already checked by _selectLocation, but good for safety
-    // _isProcessingLocation should already be true, set by _selectLocation.
-    // For clarity, ensure it is set if this method is ever called directly.
+    if (!mounted) return;
+
     if (!_isProcessingLocation && mounted) {
         setState(() => _isProcessingLocation = true);
     }
@@ -167,29 +165,23 @@ class MapSelectionScreenState extends State<MapSelectionScreen> {
     ].where((s) => s != null && s.isNotEmpty).toSet().join(', ');
     if (mapAddress.isEmpty) mapAddress = "Selected Location at ${coordinates.latitude.toStringAsFixed(5)}, ${coordinates.longitude.toStringAsFixed(5)}";
     
-    const String apiUrl = 'http://192.168.1.100/washio_api/add_address.php'; // !!! REPLACE WITH YOUR ACTUAL IP/DOMAIN !!!
-
     try {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        body: {
-          'user_id': widget.userId.toString(),
-          'address_type': widget.addressType,
-          'address_line1': addressLine1,
-          'address_line2': addressLine2,
-          'longitude': coordinates.longitude.toString(),
-          'latitude': coordinates.latitude.toString(),
-          'map_address': mapAddress,
-        },
-      ).timeout(const Duration(seconds: 10));
+      final response = await ApiService.saveUserLocation(
+        userId: widget.userId,
+        addressType: widget.addressType,
+        mapAddress: mapAddress,
+        latitude: double.parse(coordinates.latitude.toStringAsFixed(7)),
+        longitude: double.parse(coordinates.longitude.toStringAsFixed(7)),
+        addressLine1: addressLine1,
+        addressLine2: addressLine2,
+      );
 
       if (!mounted) return;
-      final responseData = jsonDecode(response.body);
-      if (response.statusCode == 200 && responseData['status'] == 'success') {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(responseData['message'] ?? 'Address saved!'), backgroundColor: Colors.green));
-        Navigator.pop(context, true); // Pop with success
+      if (response['status'] == 'success') {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response['message'] ?? 'Address saved!'), backgroundColor: Colors.green));
+        Navigator.pop(context, true);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(responseData['message'] ?? 'Failed to save address. Server error.'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response['message'] ?? 'Failed to save address. Server error.'), backgroundColor: Colors.red));
       }
     } catch (e) {
       if (!mounted) return;
@@ -218,9 +210,6 @@ class MapSelectionScreenState extends State<MapSelectionScreen> {
     }
     
     if (!mounted) {
-        // If unmounted after await, ensure processing flag is reset if it was set.
-        // This state won't be visible, but good practice.
-        // No direct setState here as widget is gone, _isProcessingLocation will be false on next init.
         return; 
     }
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fetching address details...'), duration: Duration(seconds: 2)));
@@ -231,7 +220,6 @@ class MapSelectionScreenState extends State<MapSelectionScreen> {
 
       if (placemarks.isNotEmpty) {
         await _sendAddressToApi(placemarks.first, _lastMapPosition); 
-        // _sendAddressToApi's finally block will set _isProcessingLocation to false
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not find address for this location.')));
