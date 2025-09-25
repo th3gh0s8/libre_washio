@@ -253,33 +253,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white)) 
                     : const Text('Continue'),
               ),
-              const SizedBox(height: 20),
-              const Text('or'),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.black,
-                  backgroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 5,
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+              const SizedBox(height: 24.0), // Spacing before disclaimer
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0), // Match button horizontal padding
+                child: Text(
+                  'By proceeding, you consent to receiving calls, WhatsApp or SMS/RCS messages, including by automated means, from Washio and its affiliates to the number provided.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12.0, color: Colors.grey.shade600, height: 1.3),
                 ),
-                onPressed: () {
-                  // Placeholder for Google Sign-In
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Google Sign-In coming soon!')),
-                  );
-                },
-                icon: Image.asset('assets/images/google_logo.png', height: 24.0),
-                label: const Text('Sign in with Google'),
               ),
+              const SizedBox(height: 20.0), // Spacing at the very bottom
             ],
           ),
         ),
