@@ -7,9 +7,13 @@ ini_set('display_errors', 0); // IMPORTANT: Turn off displaying errors directly 
 ini_set('log_errors', 1); 
 
 $servername = "localhost";
-$username = "root";
-$password = "Pasindu@12236"; // Please double-check this password
-$dbname = "washio";
+// $username = "root";
+// $password = "Pasindu@12236"; // Please double-check this password
+// $dbname = "washio";
+
+$username = "pw_washio";
+$password = "washio-2025-09-27"; // Please double-check this password
+$dbname = "pw_washio_db";
 $port = 3307; // Please double-check this port with your XAMPP MySQL (often 3306)
 
 $conn = null; // Initialize $conn
