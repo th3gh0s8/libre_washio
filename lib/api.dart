@@ -4,12 +4,13 @@ import 'package:http/http.dart' as http;
 class ApiService {
   // --- Updated Base URL ---
   // For Android Emulator (PHP server running on localhost:8000 on your machine)
-  static const String baseUrl = "http://10.0.2.2:8000/";
+  // static const String baseUrl = "http://10.0.2.2:8000/";
   // For iOS Simulator or web:
   // static const String baseUrl = "http://localhost:8000/";
   // For Physical Device (replace YOUR_COMPUTER_IP with your actual IP address):
   // static const String baseUrl = "http://YOUR_COMPUTER_IP:8000/";
   // --- --- 
+  static const String baseUrl = "https://go2webadmin.com/Washio/"; // Corrected online API URL based on 301 redirect
 
   static Future<Map<String, dynamic>> getUserDetails(int userId) async {
     final url = Uri.parse('${baseUrl}get_user_details.php?userId=$userId');

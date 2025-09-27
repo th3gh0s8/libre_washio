@@ -3,14 +3,18 @@ ob_start(); // Start output buffering at the very beginning
 
 // Enable full error reporting (to be logged)
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // IMPORTANT: Turn off displaying errors directly in the output
+ini_set('display_errors', 1); // IMPORTANT: Turn off displaying errors directly in the output
 ini_set('log_errors', 1); 
 
 $servername = "localhost";
-$username = "root";
-$password = "Pasindu@12236"; // Please double-check this password
-$dbname = "washio";
-$port = 3307; // Please double-check this port with your XAMPP MySQL (often 3306)
+// $username = "root";
+// $password = "Pasindu@12236"; // Please double-check this password
+// $dbname = "washio";
+
+$username = "pw_washio";
+$password = "washio-2025-09-27"; // Please double-check this password
+$dbname = "pw_washio_db";
+$port = 3306; // Please double-check this port with your XAMPP MySQL (often 3306)
 
 $conn = null; // Initialize $conn
 $db_connection_error_message = 'Connection not attempted or failed before error property set.';
