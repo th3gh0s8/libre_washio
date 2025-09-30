@@ -93,9 +93,15 @@ try {
     $stmt_insert->close();
 
 } catch (Exception $e) {
-    if ($conn->server_status & MYSQLI_TRANS_ACTIVE) { // Check if transaction is active before rollback
+    // SIMPLIFIED ROLLBACK CHECK
+    if ($conn && $conn instanceof mysqli && $conn->thread_id) { // Check if $conn is a valid, active connection
         $conn->rollback();
+        error_log("request_otp.php: Transaction rolled back due to exception.");
+    } else {
+        error_log("request_otp.php: Transaction NOT rolled back. Connection object might be invalid or no active transaction detected simply.");
     }
+    // END SIMPLIFIED ROLLBACK CHECK
+
     error_log("request_otp.php Error: " . $e->getMessage() . " for CC: $country_code_from_post, Phone: $local_phone_from_post. Input POST: " . json_encode($_POST));
     echo json_encode(['status' => 'error', 'message' => 'Could not process OTP request. ' . $e->getMessage()]);
 }
