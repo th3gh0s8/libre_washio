@@ -126,9 +126,15 @@ try {
     }
 
 } catch (Exception $e) {
-    if ($conn->server_status && ($conn->server_status & MYSQLI_TRANS_ACTIVE)) { // Check if connection valid and transaction active
+    // SIMPLIFIED ROLLBACK CHECK
+    if ($conn && $conn instanceof mysqli && $conn->thread_id) { // Check if $conn is a valid, active connection
         $conn->rollback();
+        error_log("verify_otp.php: Transaction rolled back due to exception.");
+    } else {
+        error_log("verify_otp.php: Transaction NOT rolled back. Connection object might be invalid or no active transaction detected simply.");
     }
+    // END SIMPLIFIED ROLLBACK CHECK
+
     error_log("Verify OTP Exception: " . $e->getMessage() . " for inputs: CC: $posted_country_code, Phone: $posted_local_phone, OTP: $otp_entered, Purpose: $posted_otp_purpose. SQL Error (if any): " . $conn->error);
     ob_end_clean(); // Clean buffer
     if (!headers_sent()) { header('Content-Type: application/json'); }
