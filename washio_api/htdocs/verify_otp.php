@@ -55,7 +55,7 @@ try {
     error_log("verify_otp.php: DETAILED CHECK PARAMS -> CC: [\"$posted_country_code\"], Phone: [\"$posted_local_phone\"], OTP: [\"$otp_entered\"], Purpose: [\"$posted_otp_purpose\"]");
 
     $stmt_check = $conn->prepare(
-        "SELECT ID, userTb FROM web_codes WHERE country_code = ? AND mobile_number = ? AND otp_codes = ? AND requested_at = ? AND is_active = 1 AND requested_dateTime >= NOW() - INTERVAL 10 MINUTE"
+        "SELECT ID, userTb FROM web_codes WHERE country_code = ? AND mobile_number = ? AND otp_code = ? AND requested_at = ? AND is_active = 1 AND requested_dateTime >= NOW() - INTERVAL 10 MINUTE"
     );
     if (!$stmt_check) {
         throw new Exception("OTP check statement preparation failed: " . $conn->error);

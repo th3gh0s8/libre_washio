@@ -71,7 +71,7 @@ try {
     error_log("request_otp.php: Inserting new OTP: $otp_str for CC: $country_code_from_post, Phone: $local_phone_from_post, UserID for OTP (userTb): " . ($user_id_for_otp ?? 'NULL') . ", Purpose (requested_at): $otp_request_purpose");
     
     // Ensure the table name `web_codes` and column names match your DB schema exactly.
-    $stmt_insert = $conn->prepare("INSERT INTO web_codes (country_code, mobile_number, otp_codes, userTb, is_active, requested_dateTime, requested_at) VALUES (?, ?, ?, ?, 1, NOW(), ?)");
+    $stmt_insert = $conn->prepare("INSERT INTO web_codes (country_code, mobile_number, otp_code, userTb, is_active, requested_dateTime, requested_at) VALUES (?, ?, ?, ?, 1, NOW(), ?)");
     if (!$stmt_insert) {
         throw new Exception("Insertion statement preparation failed: " . $conn->error);
     }
