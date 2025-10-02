@@ -50,9 +50,9 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
   }) {
     final theme = Theme.of(context);
     final bool hasAddress = addressData != null;
-    final title = hasAddress ? addressData['Address_Type'] : 'Add $type';
+    final title = hasAddress ? addressData['address_type'] : 'Add $type'; // Corrected key
     final subtitle = hasAddress
-        ? (addressData['Map_Address'] ?? 'No address details')
+        ? (addressData['map_address'] ?? 'No address details') // Corrected key
         : 'Save your $type address';
 
     return ListTile(
@@ -92,14 +92,14 @@ class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
 
           final allAddresses = snapshot.data ?? [];
           final homeAddress = allAddresses.firstWhere(
-            (addr) => addr['Address_Type'] == 'Home',
+            (addr) => addr['address_type'] == 'Home', // Corrected key
             orElse: () => <String, dynamic>{},
           );
           final workAddress = allAddresses.firstWhere(
-            (addr) => addr['Address_Type'] == 'Work',
+            (addr) => addr['address_type'] == 'Work', // Corrected key
             orElse: () => <String, dynamic>{},
           );
-          final otherAddresses = allAddresses.where((addr) => addr['Address_Type'] != 'Home' && addr['Address_Type'] != 'Work').toList();
+          final otherAddresses = allAddresses.where((addr) => addr['address_type'] != 'Home' && addr['address_type'] != 'Work').toList(); // Corrected key
 
           return ListView(
             children: [

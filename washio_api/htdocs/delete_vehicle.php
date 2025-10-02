@@ -4,13 +4,7 @@ header("Content-Type: application/json");
 
 include('db.php');
 
-// Log incoming POST data for debugging
-// error_log("delete_vehicle.php: Accessed. Raw POST data: " . file_get_contents('php://input'));
-// error_log("delete_vehicle.php: Parsed _POST array: " . json_encode($_POST));
-
 // Get POST data
-// Important: vehicle_id is the primary key of the vehicle record to be deleted.
-// user_id is for a security check to ensure the user owns the vehicle.
 $vehicle_id = isset($_POST['vehicle_id']) ? trim($_POST['vehicle_id']) : null;
 $user_id = isset($_POST['user_id']) ? trim($_POST['user_id']) : null; 
 
@@ -25,8 +19,7 @@ if (empty($user_id) || !filter_var($user_id, FILTER_VALIDATE_INT)) {
 }
 
 // Security Check: Verify the vehicle belongs to the user before deleting
-// This is crucial to prevent unauthorized deletions.
-$stmt_check_owner = $conn->prepare("SELECT ID FROM vehicles WHERE ID = ? AND userTB = ?");
+$stmt_check_owner = $conn->prepare("SELECT id FROM vehicles WHERE id = ? AND user_id = ?");
 if (!$stmt_check_owner) {
     echo json_encode(['status' => 'error', 'message' => 'Prepare statement failed (check owner): ' . $conn->error]);
     exit;
@@ -42,7 +35,7 @@ if ($result_check_owner->num_rows == 0) {
 $stmt_check_owner->close();
 
 // Prepare SQL to delete vehicle
-$sql = "DELETE FROM vehicles WHERE ID = ? AND userTB = ?"; // Double check userTB for safety
+$sql = "DELETE FROM vehicles WHERE id = ? AND user_id = ?"; // Double check user_id for safety
 $stmt = $conn->prepare($sql);
 
 if (!$stmt) {
@@ -56,8 +49,6 @@ if ($stmt->execute()) {
     if ($stmt->affected_rows > 0) {
         echo json_encode(['status' => 'success', 'message' => 'Vehicle deleted successfully.']);
     } else {
-        // This case should ideally not be reached if the owner check passed and vehicle_id is correct.
-        // It might indicate the vehicle was already deleted by another request.
         echo json_encode(['status' => 'error', 'message' => 'Failed to delete vehicle or vehicle not found.']);
     }
 } else {
