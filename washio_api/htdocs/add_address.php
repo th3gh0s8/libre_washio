@@ -15,8 +15,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             throw new Exception('Database connection failed.');
         }
 
+        // Corrected column names to lowercase to match schema
         $stmt = $conn->prepare(
-            "SELECT id, Address_Type, Address_Line1, Address_Line2, Map_Address, latitude, longitude FROM user_locations WHERE userTb = ?"
+            "SELECT id, address_type, address_line1, address_line2, map_address, latitude, longitude FROM user_locations WHERE user_id = ?"
         );
         if ($stmt === false) throw new Exception('Prepare failed: ' . $conn->error);
         
@@ -42,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
-// Handle POST request to add/update addresses (existing logic)
+// Handle POST request to add/update addresses
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $data = json_decode(file_get_contents('php://input'), true);
@@ -70,7 +71,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $existingId = null;
         if ($addressType == 'Home' || $addressType == 'Work') {
-            $stmt_check = $conn->prepare("SELECT id FROM user_locations WHERE userTb = ? AND Address_Type = ?");
+            // Corrected column names to lowercase
+            $stmt_check = $conn->prepare("SELECT id FROM user_locations WHERE user_id = ? AND address_type = ?");
             if ($stmt_check === false) throw new Exception('Prepare failed (check): ' . $conn->error);
             
             $stmt_check->bind_param("is", $userId, $addressType);
@@ -83,12 +85,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($existingId) {
+            // Corrected column names to lowercase
             $stmt_update = $conn->prepare(
-                "UPDATE user_locations SET Address_Line1 = ?, Address_Line2 = ?, longitude = ?, latitude = ?, Map_Address = ? WHERE id = ?"
+                "UPDATE user_locations SET address_line1 = ?, address_line2 = ?, longitude = ?, latitude = ?, map_address = ? WHERE id = ?"
             );
             if ($stmt_update === false) throw new Exception('Prepare failed (update): ' . $conn->error);
             
-            // --- CHANGE HERE ---
             $stmt_update->bind_param("sssssi", $addressLine1, $addressLine2, $longitude, $latitude, $mapAddress, $existingId);
             if ($stmt_update->execute()) {
                 echo json_encode(['status' => 'success', 'message' => "$addressType address updated successfully."]);
@@ -97,12 +99,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $stmt_update->close();
         } else {
+            // Corrected column names to lowercase
             $stmt_insert = $conn->prepare(
-                "INSERT INTO user_locations (userTb, Address_Type, Address_Line1, Address_Line2, longitude, latitude, Map_Address) VALUES (?, ?, ?, ?, ?, ?, ?)"
+                "INSERT INTO user_locations (user_id, address_type, address_line1, address_line2, longitude, latitude, map_address) VALUES (?, ?, ?, ?, ?, ?, ?)"
             );
             if ($stmt_insert === false) throw new Exception('Prepare failed (insert): ' . $conn->error);
             
-            // --- AND CHANGE HERE ---
             $stmt_insert->bind_param("issssss", $userId, $addressType, $addressLine1, $addressLine2, $longitude, $latitude, $mapAddress);
             if ($stmt_insert->execute()) {
                 echo json_encode(['status' => 'success', 'message' => 'New address saved successfully.']);
