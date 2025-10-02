@@ -93,7 +93,8 @@ try {
 
     // If vehicle details are provided, add them
     if (!empty($vehicle_no) && !empty($vehicle_type) && !empty($vehicle_model)) {
-        $sql_vehicle = "INSERT INTO vehicles (userTb, vehicle_no, vehicle_type, vehicle_model) VALUES (?, ?, ?, ?)";
+        // Corrected userTb to user_id
+        $sql_vehicle = "INSERT INTO vehicles (user_id, vehicle_no, vehicle_type, vehicle_model) VALUES (?, ?, ?, ?)";
         $stmt_vehicle = $conn->prepare($sql_vehicle);
         if (!$stmt_vehicle) {
             throw new Exception("Vehicle statement preparation failed: " . $conn->error);
