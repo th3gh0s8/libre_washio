@@ -20,8 +20,8 @@ try {
         throw new Exception('Database connection failed.');
     }
 
-    // Corrected userTb to user_id
-    $stmt = $conn->prepare("UPDATE vehicles SET vehicle_no = ?, vehicle_type = ?, vehicle_model = ? WHERE vehicle_id = ? AND user_id = ?");
+    // Corrected to use id in the where clause
+    $stmt = $conn->prepare("UPDATE vehicles SET vehicle_no = ?, vehicle_type = ?, vehicle_model = ? WHERE id = ? AND user_id = ?");
     if ($stmt === false) {
         throw new Exception('Prepare failed: ' . $conn->error);
     }

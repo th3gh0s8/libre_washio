@@ -15,8 +15,8 @@ try {
         throw new Exception('Database connection failed.');
     }
 
-    // Corrected userTb to user_id
-    $stmt = $conn->prepare("SELECT vehicle_id, vehicle_no, vehicle_type, vehicle_model FROM vehicles WHERE user_id = ?");
+    // Corrected to select the 'id' column and alias it as 'vehicle_id'
+    $stmt = $conn->prepare("SELECT id AS vehicle_id, vehicle_no, vehicle_type, vehicle_model FROM vehicles WHERE user_id = ?");
     if ($stmt === false) {
         throw new Exception('Prepare failed: ' . $conn->error);
     }
