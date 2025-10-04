@@ -2,7 +2,12 @@
     <application
         android:label="Washio"
         android:name="${applicationName}"
-        android:icon="@mipmap/launcher_icon">
+        android:icon="@mipmap/ic_launcher">
+
+        <!-- Add your Google Maps API key here -->
+        <meta-data android:name="com.google.android.geo.API_KEY"
+               android:value="YOUR_API_KEY_HERE"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
