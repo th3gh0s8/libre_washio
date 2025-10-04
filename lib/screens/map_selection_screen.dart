@@ -26,7 +26,7 @@ class MapSelectionScreenState extends State<MapSelectionScreen> {
   LatLng _lastMapPosition = const LatLng(20.5937, 78.9629); 
   final TextEditingController _searchController = TextEditingController();
 
-  bool _locationFeaturesEnabled = false;
+  bool _locationPermissionGranted = false;
   bool _isMapCenteredOnUser = false;
   bool _isProgrammaticMove = false;
   bool _isProcessingLocation = false;
@@ -39,43 +39,25 @@ class MapSelectionScreenState extends State<MapSelectionScreen> {
   @override
   void initState() {
     super.initState();
-    _animateToInitialCountryView(); 
+    _requestLocationPermissionAndInitializeMap();
   }
 
-  Future<void> _animateToInitialCountryView() async {
+  Future<void> _requestLocationPermissionAndInitializeMap() async {
     if (!mounted) return;
-    try {
-      final PermissionStatus permission = await Permission.locationWhenInUse.request();
-      if (permission == PermissionStatus.granted) {
-        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-        if (serviceEnabled) {
-          final Position position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.low,
-          );
-          _lastMapPosition = LatLng(position.latitude, position.longitude);
-          final GoogleMapController controller = await _mapController.future;
-          if (mounted) {
-            controller.animateCamera(CameraUpdate.newCameraPosition(
-              CameraPosition(target: _lastMapPosition, zoom: 6.0),
-            ));
-            setState(() {
-              _isProgrammaticMove = true;
-              _isMapCenteredOnUser = true;
-            });
-          }
-          return; 
-        }
-      }
-    } catch (e) {
-      debugPrint('Error animating to initial country view: $e');
-    }
-    if (mounted && _mapController.isCompleted) {
-        final GoogleMapController controller = await _mapController.future;
-        controller.animateCamera(CameraUpdate.newCameraPosition(_kInitialNeutralView));
-    } else if (mounted) {
-        // If controller not ready, _lastMapPosition is already at default
+
+    final status = await Permission.locationWhenInUse.request();
+    if (status.isGranted) {
+      setState(() {
+        _locationPermissionGranted = true;
+      });
+      await _goToCurrentUserLocation(isInitialLoad: true);
+    } else if (status.isDenied) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Location permission is required to use this feature.')));
+    } else if (status.isPermanentlyDenied) {
+      openAppSettings();
     }
   }
+
 
   @override
   void dispose() {
@@ -83,49 +65,38 @@ class MapSelectionScreenState extends State<MapSelectionScreen> {
     super.dispose();
   }
 
-  Future<void> _goToCurrentUserLocation() async {
-    if (!mounted) return;
-    if (!_locationFeaturesEnabled) {
-      setState(() {
-        _locationFeaturesEnabled = true;
-      });
-      await Future.delayed(const Duration(milliseconds: 100));
-    }
+  Future<void> _goToCurrentUserLocation({bool isInitialLoad = false}) async {
+    if (!mounted || !_locationPermissionGranted) return;
 
-    final PermissionStatus permission = await Permission.locationWhenInUse.request();
-    if (permission == PermissionStatus.granted) {
-      try {
-        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-        if (!serviceEnabled) {
-          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Location services are disabled.')));
-          return;
-        }
-        final Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-        final GoogleMapController controller = await _mapController.future;
-        if (mounted) {
-          _lastMapPosition = LatLng(position.latitude, position.longitude);
-          controller.animateCamera(CameraUpdate.newCameraPosition(
-            CameraPosition(target: _lastMapPosition, zoom: 16.0),
-          ));
-          setState(() {
-            _isProgrammaticMove = true;
-            _isMapCenteredOnUser = true;
-          });
-        }
-      } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error getting location: ${e.toString()}')));
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Location services are disabled.')));
+        return;
       }
-    } else {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(permission == PermissionStatus.denied ? 'Location permission denied.' : 'Location permission permanently denied.')));
+
+      final Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      final GoogleMapController controller = await _mapController.future;
+      if (mounted) {
+        _lastMapPosition = LatLng(position.latitude, position.longitude);
+        controller.animateCamera(CameraUpdate.newCameraPosition(
+          CameraPosition(target: _lastMapPosition, zoom: isInitialLoad ? 12.0 : 16.0),
+        ));
+        setState(() {
+          _isProgrammaticMove = true;
+          _isMapCenteredOnUser = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error getting location: ${e.toString()}')));
     }
   }
 
   void _onMapCreated(GoogleMapController controller) {
     if (!_mapController.isCompleted) _mapController.complete(controller);
-    if (_lastMapPosition.latitude == _kInitialNeutralView.target.latitude && _lastMapPosition.longitude == _kInitialNeutralView.target.longitude) {
-        _animateToInitialCountryView(); 
+     if (!_locationPermissionGranted) {
+      controller.animateCamera(CameraUpdate.newCameraPosition(_kInitialNeutralView));
     }
-    if (mounted) setState(() => _locationFeaturesEnabled = true);
   }
 
   void _onCameraMove(CameraPosition position) {
@@ -283,7 +254,7 @@ class MapSelectionScreenState extends State<MapSelectionScreen> {
             onMapCreated: _onMapCreated,
             onCameraMove: _onCameraMove,
             onCameraIdle: _onCameraIdle,
-            myLocationEnabled: _locationFeaturesEnabled,
+            myLocationEnabled: _locationPermissionGranted,
             myLocationButtonEnabled: false, 
             zoomControlsEnabled: true,
           ),
@@ -309,7 +280,7 @@ class MapSelectionScreenState extends State<MapSelectionScreen> {
               ),
             ),
           ),
-          if (_locationFeaturesEnabled)
+          if (_locationPermissionGranted)
             Positioned(
               bottom: MediaQuery.of(context).padding.bottom + 80 + 15, 
               right: 15.0,
@@ -318,7 +289,7 @@ class MapSelectionScreenState extends State<MapSelectionScreen> {
                 heroTag: 'myLocationButton',
                 backgroundColor: Theme.of(context).colorScheme.secondary,
                 tooltip: _isMapCenteredOnUser ? 'Location centered' : 'My Location',
-                onPressed: _goToCurrentUserLocation,
+                onPressed: () => _goToCurrentUserLocation(),
                 child: Icon(_isMapCenteredOnUser ? Icons.gps_fixed : Icons.my_location, color: Colors.white ),
               ),
             ),
