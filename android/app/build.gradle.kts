@@ -6,19 +6,24 @@ plugins {
 
 android {
     namespace = "com.powersoft.washio"
-    compileSdk = 34
-    ndkVersion = "26.1.10909125"
+    // Updated to 35 as required by dependencies
+    compileSdk = 35
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
+    // Added to align Kotlin JVM target with Java's, resolving the build error.
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
     defaultConfig {
         applicationId = "com.powersoft.washio"
         minSdk = 21
-        targetSdk = 34
-        // Correctly handle potentially missing properties with defaults
+        // Updated to match compileSdk
+        targetSdk = 35
         versionCode = (project.findProperty("flutterVersionCode") as String?)?.toInt() ?: 1
         versionName = project.findProperty("flutterVersionName") as String? ?: "1.0"
 
