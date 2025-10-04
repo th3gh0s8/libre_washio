@@ -34,7 +34,7 @@ jobs:
 
       # 4. Analyzes the project source code. This will now only fail on errors.
       - name: Analyze project source
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        run: flutter analyze
 
       # 5. Runs unit tests
       - name: Run tests

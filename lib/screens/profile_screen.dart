@@ -59,8 +59,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       'email': email,
                       'phone': phoneNumber,
                       'country_code': countryCode,
-                      // This screen seems to be legacy and doesn't have a full user object.
-                      // Passing what we have to satisfy the form.
+
                     },
                     onUserDataUpdated: (updatedData) {
                       if (mounted) {
