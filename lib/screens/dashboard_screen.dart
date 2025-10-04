@@ -201,13 +201,18 @@ class DashboardScreenState extends State<DashboardScreen> {
             return ListView(
               children: [
                 ...addresses.map((addr) {
+                  // Corrected keys to lowercase to match the API response.
+                  final addressType = addr['address_type'] ?? 'Address';
+                  final mapAddress = addr['map_address'] ?? '';
+                  final icon = addressType == 'Home' ? Icons.home : (addressType == 'Work' ? Icons.work : Icons.location_on);
+
                   return ListTile(
-                    leading: Icon(addr['Address_Type'] == 'Home' ? Icons.home : Icons.work),
-                    title: Text(addr['Address_Type'] ?? 'Address'),
-                    subtitle: Text(addr['Map_Address'] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
+                    leading: Icon(icon),
+                    title: Text(addressType),
+                    subtitle: Text(mapAddress, maxLines: 1, overflow: TextOverflow.ellipsis),
                     onTap: () {
                       setState(() {
-                        _selectedAddress = addr['Map_Address'];
+                        _selectedAddress = mapAddress;
                       });
                       Navigator.pop(context);
                     },
@@ -365,7 +370,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                   final List<Map<String, dynamic>> stationsWithData = snapshot.data!;
 
                   if (stationsWithData.isEmpty) {
-                     return const Padding(padding: EdgeInsets.all(16.0), child: Center(child: Text("No service stations found.", style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
+                     return const Padding(padding: const EdgeInsets.all(16.0), child: Center(child: Text("No service stations found.", style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
                   }
 
                   List<Widget> stationWidgets = [];
@@ -380,7 +385,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                   return Column(children: stationWidgets);
 
                 } else {
-                  return const Padding(padding: EdgeInsets.all(16.0), child: Center(child: Text("No data loaded for stations.", style: TextStyle(fontSize: 16))));
+                  return const Padding(padding: const EdgeInsets.all(16.0), child: Center(child: Text("No data loaded for stations.", style: TextStyle(fontSize: 16))));
                 }
               },
             ),

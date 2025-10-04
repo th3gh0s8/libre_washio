@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.powersoft.washio">
 
     <!-- Add location permissions here -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -7,14 +7,14 @@
     <application
         android:label="Washio"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
 
         <!-- IMPORTANT: API key stored directly for testing. Consider securing this. -->
         <meta-data android:name="com.google.android.geo.API_KEY"
                android:value="AIzaSyC-tDk9T8khl6r-W7Wf86s1VYn0AE6hAQE"/>
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.powersoft.washio.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/LaunchTheme"
