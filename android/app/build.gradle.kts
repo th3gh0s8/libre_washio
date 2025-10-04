@@ -4,9 +4,6 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-val flutterVersionName: String by project
-val flutterVersionCode: String by project
-
 android {
     namespace = "com.powersoft.washio"
     compileSdk = 34
@@ -21,10 +18,10 @@ android {
         applicationId = "com.powersoft.washio"
         minSdk = 21
         targetSdk = 34
-        versionCode = flutterVersionCode.toInt()
-        versionName = flutterVersionName
+        // Correctly handle potentially missing properties with defaults
+        versionCode = (project.findProperty("flutterVersionCode") as String?)?.toInt() ?: 1
+        versionName = project.findProperty("flutterVersionName") as String? ?: "1.0"
 
-        // Add this line to define the app name
         resValue("string", "app_name", "Washio")
     }
 
