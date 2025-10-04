@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.powersoft.washio"
-    // Updated to 35 as required by dependencies
+    // Updated to 35 as required by dependencies and to fix the build error
     compileSdk = 35
 
     compileOptions {
