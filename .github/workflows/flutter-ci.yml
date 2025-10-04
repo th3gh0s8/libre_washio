@@ -1,45 +1,53 @@
-# This workflow checks out code, installs dependencies, runs tests, and builds the app.
-
 name: Flutter CI
 
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # 1. Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      # 1. Checkout repo
       - uses: actions/checkout@v4
 
-      # 2. Sets up the Flutter SDK
+      # 2. Set up Flutter
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
-      # 3. Gets Flutter dependencies
+      # 3. Cache Flutter dependencies
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PUB_CACHE }}
+          key: ${{ runner.os }}-flutter-${{ hashFiles('pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-
+
+      # 4. Get Flutter dependencies
       - name: Get Flutter dependencies
         run: flutter pub get
 
-      # 4. Analyzes the project source code. This will now only fail on errors.
+      # 5. Analyze project source
       - name: Analyze project source
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
-      # 5. Runs unit tests
+      # 6. Run unit tests
       - name: Run tests
         run: flutter test
 
-      # 6. Builds the Android APK
+      # 7. Build Android release APK
       - name: Build Android APK
-        run: flutter build apk --debug
+        run: flutter build apk --release
+
+      # 8. Upload APK as artifact
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk

@@ -10,10 +10,10 @@ class AddVehicleScreen extends StatefulWidget {
   });
 
   @override
-  _AddVehicleScreenState createState() => _AddVehicleScreenState();
+  AddVehicleScreenState createState() => AddVehicleScreenState();
 }
 
-class _AddVehicleScreenState extends State<AddVehicleScreen> {
+class AddVehicleScreenState extends State<AddVehicleScreen> {
   final _vehicleFormKey = GlobalKey<FormState>();
   final TextEditingController _vehicleNoController = TextEditingController();
   final TextEditingController _vehicleTypeController = TextEditingController();
