@@ -15,10 +15,10 @@ class OrderDetailsScreen extends StatefulWidget {
   });
 
   @override
-  _OrderDetailsScreenState createState() => _OrderDetailsScreenState();
+  OrderDetailsScreenState createState() => OrderDetailsScreenState();
 }
 
-class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
+class OrderDetailsScreenState extends State<OrderDetailsScreen> {
   late Future<List<Map<String, dynamic>>> _orderDetailsFuture;
 
   @override
@@ -84,14 +84,14 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.05),
+        color: theme.colorScheme.primary.withAlpha(13),
         borderRadius: BorderRadius.circular(12.0),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 24,
-            backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+            backgroundColor: theme.colorScheme.primary.withAlpha(26),
             child: Icon(Icons.storefront, color: theme.colorScheme.primary, size: 28),
           ),
           const SizedBox(width: 16),
@@ -123,7 +123,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
     return Card(
       elevation: 2.0,
-      shadowColor: theme.shadowColor.withOpacity(0.1),
+      shadowColor: theme.shadowColor.withAlpha(26),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       child: Column(
         children: [

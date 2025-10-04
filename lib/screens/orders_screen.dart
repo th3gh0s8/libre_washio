@@ -18,25 +18,25 @@ class StatusBadge extends StatelessWidget {
 
     switch (status.toLowerCase()) {
       case 'completed':
-        badgeColor = Colors.green.withOpacity(0.1);
+        badgeColor = Colors.green.withAlpha(26);
         textColor = Colors.green.shade800;
         iconData = Icons.check_circle_outline;
         displayText = 'Completed';
         break;
       case 'in_progress':
-        badgeColor = Colors.blue.withOpacity(0.1);
+        badgeColor = Colors.blue.withAlpha(26);
         textColor = Colors.blue.shade800;
         iconData = Icons.hourglass_top_outlined;
         displayText = 'In Progress';
         break;
       case 'cancelled':
-        badgeColor = Colors.red.withOpacity(0.1);
+        badgeColor = Colors.red.withAlpha(26);
         textColor = Colors.red.shade800;
         iconData = Icons.cancel_outlined;
         displayText = 'Cancelled';
         break;
       default:
-        badgeColor = Colors.orange.withOpacity(0.1);
+        badgeColor = Colors.orange.withAlpha(26);
         textColor = Colors.orange.shade800;
         iconData = Icons.pending_outlined;
         displayText = 'Pending';
@@ -73,10 +73,10 @@ class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key, required this.userId});
 
   @override
-  _OrdersScreenState createState() => _OrdersScreenState();
+  OrdersScreenState createState() => OrdersScreenState();
 }
 
-class _OrdersScreenState extends State<OrdersScreen> {
+class OrdersScreenState extends State<OrdersScreen> {
   late Future<List<Map<String, dynamic>>> _ordersFuture;
 
   @override
@@ -108,7 +108,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final currencyFormatter = NumberFormat.currency(symbol: '\$'); // Added formatter
+    final currencyFormatter = NumberFormat.currency(symbol: '\$'); // Fixed symbol
 
     return Scaffold(
       appBar: AppBar(
@@ -150,7 +150,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               return Card(
                 margin: const EdgeInsets.only(bottom: 12.0),
                 elevation: 2.0,
-                shadowColor: theme.shadowColor.withOpacity(0.08),
+                shadowColor: theme.shadowColor.withAlpha(20),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(16.0),
@@ -184,7 +184,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'ID: #$displayOrderId • $orderDate',
+                          'ID: #$displayOrderId • $orderDate', // Fixed interpolation
                           style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                         ),
                         const SizedBox(height: 16),
@@ -221,12 +221,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.cloud_off_rounded, size: 80, color: theme.colorScheme.error.withOpacity(0.5)),
+            Icon(Icons.cloud_off_rounded, size: 80, color: theme.colorScheme.error.withAlpha(128)),
             const SizedBox(height: 24),
             Text('Failed to Load Orders', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(
-              'We couldn\'t fetch your order history. Please check your connection and try again.',
+              "We couldn't fetch your order history. Please check your connection and try again.", // Fixed string
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),

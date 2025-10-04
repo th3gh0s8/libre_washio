@@ -12,23 +12,25 @@ class EditVehicleScreen extends StatefulWidget {
   });
 
   @override
-  _EditVehicleScreenState createState() => _EditVehicleScreenState();
+  EditVehicleScreenState createState() => EditVehicleScreenState();
 }
 
-class _EditVehicleScreenState extends State<EditVehicleScreen> {
+class EditVehicleScreenState extends State<EditVehicleScreen> {
   final _vehicleFormKey = GlobalKey<FormState>();
   late TextEditingController _vehicleNoController;
   late TextEditingController _vehicleTypeController;
   late TextEditingController _vehicleModelController;
+  late int _vehicleId;
 
   bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
-    _vehicleNoController = TextEditingController(text: widget.vehicleData['vehicle_no']?.toString() ?? '');
-    _vehicleTypeController = TextEditingController(text: widget.vehicleData['vehicle_type']?.toString() ?? '');
-    _vehicleModelController = TextEditingController(text: widget.vehicleData['vehicle_model']?.toString() ?? '');
+    _vehicleId = widget.vehicleData['vehicle_id'] as int;
+    _vehicleNoController = TextEditingController(text: widget.vehicleData['vehicle_no'] ?? '');
+    _vehicleTypeController = TextEditingController(text: widget.vehicleData['vehicle_type'] ?? '');
+    _vehicleModelController = TextEditingController(text: widget.vehicleData['vehicle_model'] ?? '');
   }
 
   @override
@@ -53,10 +55,9 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
       final vehicleNo = _vehicleNoController.text.trim();
       final vehicleType = _vehicleTypeController.text.trim();
       final vehicleModel = _vehicleModelController.text.trim();
-      final vehicleId = widget.vehicleData['vehicle_id'] as int;
 
       final response = await ApiService.updateVehicle(
-        vehicleId: vehicleId,
+        vehicleId: _vehicleId,
         userId: widget.userId,
         vehicleNo: vehicleNo,
         vehicleType: vehicleType,
@@ -67,7 +68,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(response['message'] ?? 'Vehicle updated successfully'),
+          content: Text(response['message'] ?? 'Vehicle updated'),
           backgroundColor: response['status'] == 'success' ? Colors.green : Colors.red,
         ),
       );
@@ -109,7 +110,6 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                 controller: _vehicleNoController,
                 decoration: const InputDecoration(
                   labelText: 'Vehicle Number',
-                  hintText: 'e.g., ABC-1234',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.pin_outlined),
                 ),
@@ -126,7 +126,6 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                 controller: _vehicleTypeController,
                 decoration: const InputDecoration(
                   labelText: 'Vehicle Type',
-                  hintText: 'e.g., Car, Bike, Van',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.directions_car_filled_outlined),
                 ),
@@ -143,7 +142,6 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                 controller: _vehicleModelController,
                 decoration: const InputDecoration(
                   labelText: 'Vehicle Model',
-                  hintText: 'e.g., Toyota Corolla, Honda CB Shine',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.branding_watermark_outlined),
                 ),
