@@ -11,10 +11,10 @@ class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key, required this.userId});
 
   @override
-  _CheckoutScreenState createState() => _CheckoutScreenState();
+  CheckoutScreenState createState() => CheckoutScreenState();
 }
 
-class _CheckoutScreenState extends State<CheckoutScreen> {
+class CheckoutScreenState extends State<CheckoutScreen> {
   bool _isProcessing = false;
   final List<String> _paymentMethods = ['Cash on Delivery', 'Online Payment (Coming Soon)'];
   String _selectedPaymentMethod = 'Cash on Delivery';
@@ -49,8 +49,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (response['status'] == 'success') {
         cart.clearCart();
         
-        print('DEBUG: API createOrder response: $response'); 
-
         final actualOrderId = response['actual_order_id']?.toString();
         final displayOrderId = response['display_order_id']?.toString();
         final stationName = response['station_name']?.toString();
@@ -62,7 +60,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         if (actualOrderId != null && stationName != null) {
           _showOrderSuccessDialog(successMessage, actualOrderId, displayOrderId ?? actualOrderId, stationName);
         } else {
-          print('DEBUG: Navigation details missing. actualOrderId: $actualOrderId, stationName: $stationName, Full response: $response');
           _showError('Order placed, but could not retrieve all details for navigation.');
             showDialog(
               context: context,
@@ -119,10 +116,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               onPressed: () {
                 Navigator.of(ctx).pop(); // Close the dialog
 
-                // First, navigate back to the root screen (AppShell)
                 Navigator.of(context).popUntil((route) => route.isFirst); 
 
-                // Then, push OrderDetailsScreen onto the AppShell
                 Navigator.push( 
                   context,
                   MaterialPageRoute(
@@ -247,7 +242,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   onPressed: (cart.items.isEmpty || _isProcessing) ? null : () => _placeOrder(cart),
                   child: _isProcessing
                       ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white))
-                      : Text('Place Order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      : const Text('Place Order', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),

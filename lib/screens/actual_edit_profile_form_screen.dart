@@ -12,11 +12,11 @@ class ActualEditProfileFormScreen extends StatefulWidget {
   });
 
   @override
-  _ActualEditProfileFormScreenState createState() =>
-      _ActualEditProfileFormScreenState();
+  ActualEditProfileFormScreenState createState() =>
+      ActualEditProfileFormScreenState();
 }
 
-class _ActualEditProfileFormScreenState
+class ActualEditProfileFormScreenState
     extends State<ActualEditProfileFormScreen> {
   final _formKey = GlobalKey<FormState>();
   // MODIFIED: Controllers for first and last name

@@ -10,10 +10,10 @@ class CartScreen extends StatefulWidget {
   const CartScreen({super.key, required this.userId});
 
   @override
-  _CartScreenState createState() => _CartScreenState();
+  CartScreenState createState() => CartScreenState();
 }
 
-class _CartScreenState extends State<CartScreen> {
+class CartScreenState extends State<CartScreen> {
 
   void _navigateToCheckout() {
     Navigator.push(
@@ -49,7 +49,6 @@ class _CartScreenState extends State<CartScreen> {
                     itemBuilder: (context, index) {
                       final item = cart.items[index];
                       final itemName = item['service_name']?.toString() ?? 'Service';
-                      // final itemPrice = (item['service_price'] as num?)?.toStringAsFixed(2) ?? '0.00'; // Removed
                       final quantity = item['quantity'] as int? ?? 1;
 
                       final priceValue = (item['service_price'] as num?)?.toDouble() ?? 0.0;
