@@ -1,40 +1,41 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val flutterVersionName: String by project
+val flutterVersionCode: String by project
+
 android {
     namespace = "com.powersoft.washio"
-    compileSdk = flutter.compileSdkVersion
-    //ndkVersion = flutter.ndkVersion
-    ndkVersion = "27.0.12077973"
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
+    compileSdk = 34
+    ndkVersion = "26.1.10909125"
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
 
     defaultConfig {
         applicationId = "com.powersoft.washio"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        //minSdk = flutter.minSdkVersion
         minSdk = 21
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        targetSdk = 34
+        versionCode = flutterVersionCode.toInt()
+        versionName = flutterVersionName
+
+        // Add this line to define the app name
+        resValue("string", "app_name", "Washio")
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            isMinifyEnabled = true
             signingConfig = signingConfigs.getByName("debug")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }

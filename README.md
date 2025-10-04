@@ -1,6 +1,6 @@
-# libre_washio
+# Washio
 
-Car Service Booking Application
+A new Flutter project.
 
 ## Getting Started
 

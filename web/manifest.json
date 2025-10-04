@@ -1,11 +1,11 @@
 {
-    "name": "libre_washio",
-    "short_name": "libre_washio",
+    "name": "Washio",
+    "short_name": "Washio",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "Car Service Booking Application",
+    "description": "A new Flutter project.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
