@@ -1,16 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 
 class ApiService {
   // --- Updated Base URL ---
-  // For Android Emulator (PHP server running on localhost:8000 on your machine)
-  // static const String baseUrl = "http://10.0.2.2:8000/";
-  // For iOS Simulator or web:
-  // static const String baseUrl = "http://localhost:8000/";
-  // For Physical Device (replace YOUR_COMPUTER_IP with your actual IP address):
-  // static const String baseUrl = "http://YOUR_COMPUTER_IP:8000/";
-  // --- --- 
   static const String baseUrl = "https://go2webadmin.com/Washio/"; // Corrected online API URL based on 301 redirect
 
   static Future<Map<String, dynamic>> getUserDetails(int userId) async {
@@ -143,14 +135,6 @@ class ApiService {
 
   static Future<Map<String, dynamic>> requestOtp(String phoneNumber, String countryCode) async {
     final url = Uri.parse('${baseUrl}request_otp.php');
-
-    try {
-      final result = await InternetAddress.lookup('google.com');
-      print('Lookup result: $result');
-    } catch (e) {
-      print('DNS lookup failed: $e');
-    }
-
     try {
       final response = await http.post(
         url,
@@ -161,15 +145,12 @@ class ApiService {
         },
       );
       if (response.statusCode == 200) {
-       print(response.body);
         final decodedResponse = jsonDecode(response.body) as Map<String, dynamic>;
         return decodedResponse;
       } else {
-        print('FaileD ERROR');
         throw Exception('Failed to request OTP. Status code: ${response.statusCode}, Body: ${response.body}');
       }
     } catch (e) {
-      print('ERROR OTP: $e');
       throw Exception('Error requesting OTP: $e');
     }
   }
