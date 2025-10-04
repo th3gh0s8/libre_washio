@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart'; // Added import
+import 'package:intl/intl.dart';
 import '../api.dart';
 import '../cart_provider.dart';
 
@@ -10,10 +10,10 @@ class ServicesScreen extends StatefulWidget {
   const ServicesScreen({super.key, this.stationData});
 
   @override
-  _ServicesScreenState createState() => _ServicesScreenState();
+  State<ServicesScreen> createState() => ServicesScreenState();
 }
 
-class _ServicesScreenState extends State<ServicesScreen> {
+class ServicesScreenState extends State<ServicesScreen> {
   // State for stations list
   List<Map<String, dynamic>> _stations = [];
   bool _isLoadingStations = true;
@@ -116,7 +116,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           child: Padding(padding: const EdgeInsets.all(16.0), child: Text(_stationError!, style: const TextStyle(color: Colors.red, fontSize: 16), textAlign: TextAlign.center)));
     }
     if (_stations.isEmpty) {
-      return const Center(child: Padding(padding: const EdgeInsets.all(16.0), child: Text('No service stations found.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
+      return const Center(child: Padding(padding: EdgeInsets.all(16.0), child: Text('No service stations found.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
     }
     return ListView.builder(
       itemCount: _stations.length,
@@ -144,17 +144,17 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
     final stationName = _selectedStation!['name']?.toString() ?? 'Station';
     final theme = Theme.of(context);
-    final currencyFormatter = NumberFormat.currency(symbol: '\$'); // Added formatter
+    final currencyFormatter = NumberFormat.currency(symbol: '\$');
 
     Widget servicesContent;
     if (_isLoadingServices) {
-      servicesContent = const Center(child: Padding(padding: const EdgeInsets.all(20.0), child: CircularProgressIndicator()));
+      servicesContent = const Center(child: Padding(padding: EdgeInsets.all(20.0), child: CircularProgressIndicator()));
     } else if (_serviceError != null) {
       servicesContent = Center(
           child: Padding(padding: const EdgeInsets.all(16.0), child: Text(_serviceError!, style: const TextStyle(color: Colors.red, fontSize: 16), textAlign: TextAlign.center)));
     } else if (_servicesForSelectedStation.isEmpty) {
       servicesContent = const Center(
-          child: Padding(padding: const EdgeInsets.all(16.0), child: Text('No services listed for this station.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
+          child: Padding(padding: EdgeInsets.all(16.0), child: Text('No services listed for this station.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
     } else {
       servicesContent = ListView.separated(
         shrinkWrap: true, 
@@ -239,7 +239,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
                         shape: BoxShape.circle,
                          boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withAlpha(26), // Modern replacement for withOpacity
                               blurRadius: 3,
                               offset: const Offset(1,1),
                             )
@@ -266,7 +266,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
         children: [
           Container(
             padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
-            color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+            color: theme.colorScheme.primaryContainer.withAlpha(77), // Modern replacement for withOpacity
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,

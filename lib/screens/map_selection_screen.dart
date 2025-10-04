@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -31,8 +30,8 @@ class MapSelectionScreenState extends State<MapSelectionScreen> {
   bool _isProgrammaticMove = false;
   bool _isProcessingLocation = false;
 
-  static final CameraPosition _kInitialNeutralView = CameraPosition(
-    target: const LatLng(20.5937, 78.9629), 
+  static final CameraPosition _kInitialNeutralView = const CameraPosition(
+    target: LatLng(20.5937, 78.9629), 
     zoom: 3.0,
   );
 
@@ -52,7 +51,9 @@ class MapSelectionScreenState extends State<MapSelectionScreen> {
       });
       await _goToCurrentUserLocation(isInitialLoad: true);
     } else if (status.isDenied) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Location permission is required to use this feature.')));
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Location permission is required to use this feature.')));
+      }
     } else if (status.isPermanentlyDenied) {
       openAppSettings();
     }
@@ -227,7 +228,9 @@ class MapSelectionScreenState extends State<MapSelectionScreen> {
         controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(target: targetLocation, zoom: 15.0)));
         setState(() => _isMapCenteredOnUser = false ); 
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Location "$query" not found.')));
+        if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Location "$query" not found.')));
+        }
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error searching location: ${e.toString()}')));

@@ -20,7 +20,8 @@ class AppTheme {
         secondary: const Color(0xFF00A3AD),
         secondaryContainer: const Color(0xFFB3E5FC),
         surface: _lightSurface,
-        background: _lightSurface,
+        // The 'background' property is deprecated, so we set the color scheme here.
+        // The individual widgets below will use colors from the scheme.
       ),
       scaffoldBackgroundColor: _lightSurface,
       appBarTheme: const AppBarTheme(
@@ -75,12 +76,12 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: _primaryColor,
         brightness: Brightness.dark,
-        primary: _primaryColor, // <<< CORRECTED TYPO HERE
+        primary: _primaryColor, 
         primaryContainer: _darkPrimaryContainer,
         secondary: const Color(0xFF4DD0E1),
         secondaryContainer: const Color(0xFF005662),
         surface: _darkSurface,
-        background: _darkSurface,
+        // The 'background' property is deprecated.
       ),
       scaffoldBackgroundColor: _darkSurface,
       appBarTheme: const AppBarTheme(
