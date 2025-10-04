@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'edit_profile_screen.dart'; // We will create this next
+import 'actual_edit_profile_form_screen.dart'; 
 
 class ProfileScreen extends StatefulWidget {
   final String initialPhoneNumber;
@@ -21,7 +21,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late String phoneNumber;
   late String countryCode;
   late String countryName;
-  // Dummy fields for now, we can make them editable later
   String name = 'John Doe';
   String email = 'john.doe@example.com';
 
@@ -33,13 +32,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     countryName = widget.initialCountryName;
   }
 
-  void _updateProfileDetails(Map<String, String> updatedDetails) {
+  void _updateProfileDetails(Map<String, dynamic> updatedDetails) {
+    if (!mounted) return;
     setState(() {
-      name = updatedDetails['name'] ?? name;
-      email = updatedDetails['email'] ?? email;
-      phoneNumber = updatedDetails['phoneNumber'] ?? phoneNumber;
-      // countryCode and countryName might not be editable in this flow
-      // but if they are, they can be updated here too.
+      name = updatedDetails['name']?.toString() ?? name;
+      email = updatedDetails['email']?.toString() ?? email;
+      phoneNumber = updatedDetails['phone']?.toString() ?? phoneNumber;
     });
   }
 
@@ -52,22 +50,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () async {
-              final result = await Navigator.push(
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => EditProfileScreen(
-                    currentName: name,
-                    currentEmail: email,
-                    currentPhoneNumber: phoneNumber,
-                    currentCountryCode: countryCode, // Pass even if not directly editable for context
-                    currentCountryName: countryName, userData: {}, // Pass even if not directly editable for context
+                  builder: (context) => ActualEditProfileFormScreen(
+                    initialUserData: {
+                      'name': name,
+                      'email': email,
+                      'phone': phoneNumber,
+                      'country_code': countryCode,
+                      // This screen seems to be legacy and doesn't have a full user object.
+                      // Passing what we have to satisfy the form.
+                    },
+                    onUserDataUpdated: (updatedData) {
+                      if (mounted) {
+                        _updateProfileDetails(updatedData);
+                      }
+                    },
                   ),
                 ),
               );
-
-              if (result != null && result is Map<String, String>) {
-                _updateProfileDetails(result);
-              }
             },
           ),
         ],
