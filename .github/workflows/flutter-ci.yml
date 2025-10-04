@@ -37,9 +37,14 @@ jobs:
       - name: Analyze project source
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
-      # 6. Run unit tests
+      # 6. Run unit tests (skip if no test folder)
       - name: Run tests
-        run: flutter test
+        run: |
+          if [ -d "test" ]; then
+            flutter test
+          else
+            echo "No tests found, skipping..."
+          fi
 
       # 7. Build Android release APK
       - name: Build Android APK
