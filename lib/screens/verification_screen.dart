@@ -20,10 +20,10 @@ class VerificationScreen extends StatefulWidget {
   });
 
   @override
-  _VerificationScreenState createState() => _VerificationScreenState();
+  VerificationScreenState createState() => VerificationScreenState();
 }
 
-class _VerificationScreenState extends State<VerificationScreen> {
+class VerificationScreenState extends State<VerificationScreen> {
   final List<TextEditingController> _codeControllers =
       List.generate(6, (index) => TextEditingController());
   final List<FocusNode> _focusNodes = 
@@ -41,14 +41,14 @@ class _VerificationScreenState extends State<VerificationScreen> {
   }
 
   Future<void> _verifyCode() async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
     String otp = _codeControllers.map((controller) => controller.text).join();
     
     if (otp.length != 6) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a valid 6-digit code.')),
-        );
-      }
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Please enter a valid 6-digit code.')),
+      );
       return;
     }
 
@@ -59,71 +59,65 @@ class _VerificationScreenState extends State<VerificationScreen> {
     try {
       final response = await ApiService.verifyOtp(widget.countryCode, widget.phoneNumber, otp, widget.otpPurpose); 
 
-      if (mounted) {
-        if (response['status'] == 'success') {
-          bool userExists = response['user_exists'] ?? false;
-          Map<String, dynamic>? userData = response['user_data'] as Map<String, dynamic>?;
+      if (response['status'] == 'success') {
+        bool userExists = response['user_exists'] ?? false;
+        Map<String, dynamic>? userData = response['user_data'] as Map<String, dynamic>?;
 
-          if (userExists && userData != null) {
-            // --- SAVE USER DATA TO SESSION ---
-            await SessionManager.saveUserData(userData);
+        if (userExists && userData != null) {
+          // --- SAVE USER DATA TO SESSION ---
+          await SessionManager.saveUserData(userData);
 
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(
-                builder: (context) => AppShell( 
-                  userData: userData, 
-                ),
+          navigator.pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (context) => AppShell( 
+                userData: userData, 
               ),
-              (Route<dynamic> route) => false, 
-            );
-          } else if (userExists && userData == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('User exists but data is missing. Please try again.')),
-            );
-            // Reset focus and clear fields on error too if needed, similar to wrong OTP
-            for (var controller in _codeControllers) {
-              controller.clear();
-            }
-            if (_focusNodes.isNotEmpty) {
-              FocusScope.of(context).requestFocus(_focusNodes[0]);
-            }
-          } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => RegistrationScreen(
-                  phoneNumber: widget.phoneNumber,
-                  countryCode: widget.countryCode,
-                ),
-              ),
-            );
-          }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response['message'] ?? 'Invalid OTP. Please try again.')),
+            ),
+            (Route<dynamic> route) => false, 
           );
-          // Clear fields and reset focus for incorrect OTP
+        } else if (userExists && userData == null) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(content: Text('User exists but data is missing. Please try again.')),
+          );
+          // Reset focus and clear fields on error too if needed, similar to wrong OTP
           for (var controller in _codeControllers) {
             controller.clear();
           }
-          if (_focusNodes.isNotEmpty) { 
+          if (_focusNodes.isNotEmpty) {
             FocusScope.of(context).requestFocus(_focusNodes[0]);
           }
+        } else {
+          navigator.pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => RegistrationScreen(
+                phoneNumber: widget.phoneNumber,
+                countryCode: widget.countryCode,
+              ),
+            ),
+          );
+        }
+      } else {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text(response['message'] ?? 'Invalid OTP. Please try again.')),
+        );
+        // Clear fields and reset focus for incorrect OTP
+        for (var controller in _codeControllers) {
+          controller.clear();
+        }
+        if (_focusNodes.isNotEmpty) { 
+          FocusScope.of(context).requestFocus(_focusNodes[0]);
         }
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An error occurred: ${e.toString()}')),
-        );
-        // Optionally, clear fields and reset focus on general error too
-        for (var controller in _codeControllers) {
-            controller.clear();
-        }
-        if (_focusNodes.isNotEmpty) {
-            FocusScope.of(context).requestFocus(_focusNodes[0]);
-        }
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('An error occurred: ${e.toString()}')),
+      );
+      // Optionally, clear fields and reset focus on general error too
+      for (var controller in _codeControllers) {
+          controller.clear();
+      }
+      if (_focusNodes.isNotEmpty) {
+          FocusScope.of(context).requestFocus(_focusNodes[0]);
       }
     } finally {
       if (mounted) {
@@ -175,28 +169,25 @@ class _VerificationScreenState extends State<VerificationScreen> {
   }
 
   Future<void> _resendOtp() async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
     setState(() {
       _isLoading = true; 
     });
     try {
       final Map<String, dynamic> newOtpResponse = await ApiService.requestOtp(widget.phoneNumber, widget.countryCode);
-      if (mounted) {
-        if (newOtpResponse['status'] == 'success') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('A new OTP has been sent to your phone number. Please check your messages.')), 
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(newOtpResponse['message'] ?? 'Failed to resend OTP. Please try again.')),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to resend OTP: ${e.toString()}')),
+      if (newOtpResponse['status'] == 'success') {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(content: Text('A new OTP has been sent to your phone number. Please check your messages.')), 
+        );
+      } else {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text(newOtpResponse['message'] ?? 'Failed to resend OTP. Please try again.')),
         );
       }
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Failed to resend OTP: ${e.toString()}')),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -223,10 +214,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 30),
-            RawKeyboardListener(
+            KeyboardListener(
               focusNode: FocusNode(), 
-              onKey: (RawKeyEvent event) {
-                if (event is RawKeyDownEvent && event.logicalKey == LogicalKeyboardKey.backspace) {
+              onKeyEvent: (KeyEvent event) {
+                if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.backspace) {
                   for (int i = 0; i < 6; i++) {
                     if (_focusNodes[i].hasFocus) {
                       if (_codeControllers[i].text.isEmpty && i > 0) {

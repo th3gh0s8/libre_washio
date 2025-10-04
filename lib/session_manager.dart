@@ -12,7 +12,7 @@ class SessionManager {
       await prefs.setString(_userDataKey, userJson);
     } catch (e) {
       // Handle potential errors, e.g., by logging them
-      print('Error saving user data: $e');
+      //print('Error saving user data: $e');
     }
   }
 
@@ -26,7 +26,7 @@ class SessionManager {
       }
       return null;
     } catch (e) {
-      print('Error loading user data: $e');
+      //print('Error loading user data: $e');
       return null;
     }
   }
@@ -37,7 +37,7 @@ class SessionManager {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_userDataKey);
     } catch (e) {
-      print('Error clearing user data: $e');
+      //print('Error clearing user data: $e');
     }
   }
 }
