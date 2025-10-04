@@ -201,7 +201,6 @@ class DashboardScreenState extends State<DashboardScreen> {
             return ListView(
               children: [
                 ...addresses.map((addr) {
-                  // Corrected keys to lowercase to match the API response.
                   final addressType = addr['address_type'] ?? 'Address';
                   final mapAddress = addr['map_address'] ?? '';
                   final icon = addressType == 'Home' ? Icons.home : (addressType == 'Work' ? Icons.work : Icons.location_on);
@@ -320,7 +319,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                   },
                   borderRadius: BorderRadius.circular(20), 
                   child: Ink(
-                    decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 3, offset: const Offset(1,1))]),
+                    decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withAlpha(26), blurRadius: 3, offset: const Offset(1,1))]),
                     child: const SizedBox(width: 40, height: 40, child: Icon(Icons.add_shopping_cart, color: Colors.white, size: 22)),
                   ),
                 ),
@@ -370,7 +369,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                   final List<Map<String, dynamic>> stationsWithData = snapshot.data!;
 
                   if (stationsWithData.isEmpty) {
-                     return const Padding(padding: const EdgeInsets.all(16.0), child: Center(child: Text("No service stations found.", style: TextStyle(fontSize: 16), textAlign: TextAlign.center)));
+                     return const Center(child: Text("No service stations found.", style: TextStyle(fontSize: 16), textAlign: TextAlign.center));
                   }
 
                   List<Widget> stationWidgets = [];
@@ -385,7 +384,7 @@ class DashboardScreenState extends State<DashboardScreen> {
                   return Column(children: stationWidgets);
 
                 } else {
-                  return const Padding(padding: const EdgeInsets.all(16.0), child: Center(child: Text("No data loaded for stations.", style: TextStyle(fontSize: 16))));
+                  return const Center(child: Text("No data loaded for stations.", style: TextStyle(fontSize: 16)));
                 }
               },
             ),

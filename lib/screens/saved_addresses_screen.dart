@@ -8,10 +8,10 @@ class SavedAddressesScreen extends StatefulWidget {
   const SavedAddressesScreen({super.key, required this.userId});
 
   @override
-  _SavedAddressesScreenState createState() => _SavedAddressesScreenState();
+  SavedAddressesScreenState createState() => SavedAddressesScreenState();
 }
 
-class _SavedAddressesScreenState extends State<SavedAddressesScreen> {
+class SavedAddressesScreenState extends State<SavedAddressesScreen> {
   late Future<List<Map<String, dynamic>>> _addressesFuture;
 
   @override

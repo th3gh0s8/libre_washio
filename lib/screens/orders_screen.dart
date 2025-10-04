@@ -73,10 +73,10 @@ class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key, required this.userId});
 
   @override
-  _OrdersScreenState createState() => _OrdersScreenState();
+  OrdersScreenState createState() => OrdersScreenState();
 }
 
-class _OrdersScreenState extends State<OrdersScreen> {
+class OrdersScreenState extends State<OrdersScreen> {
   late Future<List<Map<String, dynamic>>> _ordersFuture;
 
   @override
@@ -108,7 +108,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final currencyFormatter = NumberFormat.currency(symbol: '\$'); // Added formatter
+    final currencyFormatter = NumberFormat.currency(symbol: '\\\$'); // Added formatter
 
     return Scaffold(
       appBar: AppBar(
@@ -184,7 +184,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'ID: #$displayOrderId • $orderDate',
+                          'ID: #\$displayOrderId • \$orderDate',
                           style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                         ),
                         const SizedBox(height: 16),
@@ -203,8 +203,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           ],
                         ),
                       ],
-                    ),
-                  ),
+                    ),                  ),
                 ),
               );
             },

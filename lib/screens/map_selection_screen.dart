@@ -30,7 +30,7 @@ class MapSelectionScreenState extends State<MapSelectionScreen> {
   bool _isProgrammaticMove = false;
   bool _isProcessingLocation = false;
 
-  static final CameraPosition _kInitialNeutralView = const CameraPosition(
+  static const CameraPosition _kInitialNeutralView = CameraPosition(
     target: LatLng(20.5937, 78.9629), 
     zoom: 3.0,
   );

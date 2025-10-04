@@ -21,10 +21,10 @@ class EditProfileScreen extends StatefulWidget {
   });
 
   @override
-  _EditProfileScreenState createState() => _EditProfileScreenState();
+  EditProfileScreenState createState() => EditProfileScreenState();
 }
 
-class _EditProfileScreenState extends State<EditProfileScreen> {
+class EditProfileScreenState extends State<EditProfileScreen> {
   String _displayName = "User";
   String _displayEmail = "";
   late int _currentUserId;
@@ -150,7 +150,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         children: <Widget>[
           Container(
             padding: const EdgeInsets.all(20.0),
-            color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+            color: theme.colorScheme.primaryContainer.withAlpha(77),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
