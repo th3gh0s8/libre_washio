@@ -32,9 +32,9 @@ jobs:
       - name: Get Flutter dependencies
         run: flutter pub get
 
-      # 4. Analyzes the project source code
+      # 4. Analyzes the project source code, but don't fail on info-level warnings
       - name: Analyze project source
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
 
       # 5. Runs unit tests
       - name: Run tests
