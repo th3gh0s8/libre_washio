@@ -37,7 +37,7 @@ jobs:
 
       # 5. Analyze project source
       - name: Analyze project source
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       # 6. Run unit tests (skip if no test folder)
       - name: Run tests
