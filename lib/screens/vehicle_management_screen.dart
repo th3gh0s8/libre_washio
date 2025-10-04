@@ -12,10 +12,10 @@ class VehicleManagementScreen extends StatefulWidget {
   });
 
   @override
-  _VehicleManagementScreenState createState() => _VehicleManagementScreenState();
+  VehicleManagementScreenState createState() => VehicleManagementScreenState();
 }
 
-class _VehicleManagementScreenState extends State<VehicleManagementScreen> {
+class VehicleManagementScreenState extends State<VehicleManagementScreen> {
   late Future<List<Map<String, dynamic>>> _vehiclesFuture;
 
   @override
@@ -160,14 +160,14 @@ class _VehicleManagementScreenState extends State<VehicleManagementScreen> {
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
                 elevation: 2.0,
-                shadowColor: theme.shadowColor.withOpacity(0.1),
+                shadowColor: theme.shadowColor.withAlpha(26),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
                   child: ListTile(
                     leading: CircleAvatar(
                       radius: 24,
-                      backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                      backgroundColor: theme.colorScheme.primary.withAlpha(26),
                       child: Icon(
                         vehicleIcon,
                         color: theme.colorScheme.primary,
@@ -218,7 +218,7 @@ class _VehicleManagementScreenState extends State<VehicleManagementScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.cloud_off_rounded, size: 80, color: theme.colorScheme.error.withOpacity(0.5)),
+            Icon(Icons.cloud_off_rounded, size: 80, color: theme.colorScheme.error.withAlpha(128)),
             const SizedBox(height: 24),
             Text('Failed to Load Vehicles', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),

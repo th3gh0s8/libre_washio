@@ -87,7 +87,7 @@ class _SectionCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
       elevation: 2.0,
-      shadowColor: theme.shadowColor.withOpacity(0.1),
+      shadowColor: theme.shadowColor.withAlpha(26),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       child: ExpansionTile(
         leading: Icon(icon, color: theme.colorScheme.primary),

@@ -196,7 +196,7 @@ class OrderDetailsScreenState extends State<OrderDetailsScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'We couldn\'t fetch the details for this order. Please check your connection and try again.',
+              "We couldn't fetch the details for this order. Please check your connection and try again.",
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey[500]),
             ),

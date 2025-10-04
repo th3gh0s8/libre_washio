@@ -105,7 +105,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         }
       }
     } catch (e) {
-      print('LOGIN ERROR: ${e.toString()}');
+      //print('LOGIN ERROR: ${e.toString()}');
       if (mounted) {
         _showMessage('An error occurred: ${e.toString()}');
       }

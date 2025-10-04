@@ -239,7 +239,7 @@ class ServicesScreenState extends State<ServicesScreen> {
                         shape: BoxShape.circle,
                          boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withAlpha(26), // Modern replacement for withOpacity
+                              color: Colors.black.withAlpha(26), // Modern replacement for withAlpha
                               blurRadius: 3,
                               offset: const Offset(1,1),
                             )
@@ -266,7 +266,7 @@ class ServicesScreenState extends State<ServicesScreen> {
         children: [
           Container(
             padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
-            color: theme.colorScheme.primaryContainer.withAlpha(77), // Modern replacement for withOpacity
+            color: theme.colorScheme.primaryContainer.withAlpha(77), // Modern replacement for withAlpha
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
