@@ -8,7 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:libre_washio/main.dart';
+import 'package:washio/main.dart';
 
 void main() {
   testWidgets('App starts and shows loading indicator', (WidgetTester tester) async {
