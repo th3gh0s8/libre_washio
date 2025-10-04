@@ -83,8 +83,12 @@ class ActualEditProfileFormScreenState
             Map<String, dynamic> updatedUserDataFromResponse =
                 response['user_data'] as Map<String, dynamic>? ?? {};
             
+            // Ensure the local data is updated with what the server returns
+            // including the combined name if the server provides it back directly
+            // or construct it if only first/last are returned (though our PHP sends combined)
             Map<String, dynamic> finalUpdatedUserData = Map.from(widget.initialUserData);
             finalUpdatedUserData.addAll(updatedUserDataFromResponse);
+             // Ensure the 'name' field in finalUpdatedUserData is the combined one
             finalUpdatedUserData['name'] = fullName; 
 
             ScaffoldMessenger.of(context).showSnackBar(
@@ -93,7 +97,7 @@ class ActualEditProfileFormScreenState
             
             widget.onUserDataUpdated?.call(finalUpdatedUserData);
             
-            Navigator.pop(context, finalUpdatedUserData);
+            Navigator.pop(context, finalUpdatedUserData); // Pop back to Account screen
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(response['message'] ?? 'Failed to update profile.')),
@@ -118,6 +122,7 @@ class ActualEditProfileFormScreenState
 
   @override
   void dispose() {
+    // MODIFIED: Dispose new name controllers
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
@@ -153,6 +158,7 @@ class ActualEditProfileFormScreenState
                     textAlign: TextAlign.start,
                   ),
                 ),
+              // MODIFIED: First Name TextFormField
               TextFormField(
                 controller: _firstNameController,
                 decoration: const InputDecoration(
@@ -169,6 +175,7 @@ class ActualEditProfileFormScreenState
                 textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 16),
+              // MODIFIED: Last Name TextFormField
               TextFormField(
                 controller: _lastNameController,
                 decoration: const InputDecoration(
@@ -176,7 +183,11 @@ class ActualEditProfileFormScreenState
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.person_outline),
                 ),
+                // Last name can be optional, adjust validator if needed
                 validator: (value) {
+                  // if (value == null || value.trim().isEmpty) {
+                  //   return 'Please enter your last name';
+                  // }
                   return null;
                 },
                 textInputAction: TextInputAction.next,
